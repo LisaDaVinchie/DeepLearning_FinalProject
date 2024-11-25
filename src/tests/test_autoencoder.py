@@ -1,9 +1,9 @@
 import torch
-from models.autoencoder import InpaintingAutoencoder
+from models.autoencoder import Autoencoder_conv
 
 def test_autoencoder_forward():
     """Test the forward pass of the autoencoder"""
-    model = InpaintingAutoencoder()
+    model = Autoencoder_conv()
     model.eval()  # Set to evaluation mode
     
     # Create dummy inputs
@@ -41,7 +41,7 @@ def test_mask_application():
 
 def test_model_trainable():
     """Test that the model has trainable parameters"""
-    model = InpaintingAutoencoder()
+    model = Autoencoder_conv()
     assert any(p.requires_grad for p in model.parameters()), "Model parameters are not trainable."
     
     print("Model trainable test passed.")

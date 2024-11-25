@@ -1,1 +1,1 @@
-from models.autoencoder import InpaintingAutoencoder
+from models.autoencoder import Autoencoder_conv
