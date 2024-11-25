@@ -14,8 +14,8 @@ train_folder = Path(sys.argv[2])
 test_folder = Path(sys.argv[3])
 
 # Declare the total number of images and classes
-total_train_images: int = 2000
-total_test_images = 500
+total_train_images: int = 1000
+total_test_images = 1500
 n_classes = 100
 
 if not original_images_path.exists():
@@ -85,11 +85,13 @@ train_images_list = [None] * total_train_images
 train_labels_list = [None] * total_train_images
 train_targets_list = [None] * total_train_images
 train_masks_list = [None] * total_train_images
+train_labels_list = [None] * total_train_images
 
 test_images_list = [None] * total_test_images
 test_labels_list = [None] * total_test_images
 test_targets_list = [None] * total_test_images
 test_masks_list = [None] * total_test_images
+test_labels_list = [None] * total_test_images
 
 # Iterate over the train images class folders
 i: int = 0
@@ -113,10 +115,12 @@ for folder in random.sample(folder_list, n_classes):
             
     # Iterate over the train images
     train_images_list[i:i + train_images_per_class], train_masks_list[i:i + train_images_per_class], train_targets_list[i:i + train_images_per_class] = extract_image_info(train_images)
+    train_labels_list[i:i + train_images_per_class] = [label] * train_images_per_class
     i += train_images_per_class
     
     # Iterate over the test images
     test_images_list[j:j + test_images_per_class], test_masks_list[j:j + test_images_per_class], test_targets_list[j:j + test_images_per_class] = extract_image_info(test_images)
+    test_labels_list[j:j + test_images_per_class] = [label] * test_images_per_class
     j += test_images_per_class
     
 print("Lists created.")
