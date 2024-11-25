@@ -24,8 +24,11 @@ def batch_MSE_loss(output: th.tensor, target: th.tensor, mask: th.tensor) -> th.
     Returns:
         th.tensor: the loss value
     """
-    loss = 0
-    for i in range(output.shape[0]):
+    images_per_batch = output.shape[0]
+    
+    
+    loss = 0.0
+    for i in range(images_per_batch):
         loss += th.mean((output[i] - target[i]) ** 2 * mask[i])
         
-    return loss / output.shape[0]
+    return loss / images_per_batch
