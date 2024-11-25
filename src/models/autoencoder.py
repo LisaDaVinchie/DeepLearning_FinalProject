@@ -1,8 +1,8 @@
 from torch import nn
 
-class InpaintingAutoencoder(nn.Module):
+class Autoencoder_conv(nn.Module):
     def __init__(self, in_channels=3, middle_channels= [64, 128, 256], kernel_size = [3, 3, 3], stride = [2, 2, 2], padding = [1, 1, 1], output_padding = [1, 1, 1]):
-        super(InpaintingAutoencoder, self).__init__()
+        super(Autoencoder_conv, self).__init__()
         # Encoder
         self.encoder = nn.Sequential(
             nn.Conv2d(in_channels, middle_channels[0], kernel_size=kernel_size[0], stride=stride[0], padding=padding[0]),  # 64x64 -> 32x32
