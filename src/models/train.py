@@ -3,7 +3,7 @@ from pathlib import Path
 from torch.utils.data import DataLoader
 import torch as th
 from data_preprocessing.ImageDataset import CustomImageDataset
-from autoencoder import Autoencoder_conv
+from autoencoder import Autoencoder_conv, Autoencoder_unet
 from losses import batch_MSE_loss
 import torch.optim as optim
 from tqdm.auto import trange
@@ -18,11 +18,9 @@ if len(sys.argv) < 3:
 train_dataset_path = Path(sys.argv[1])
 test_dataset_path = Path(sys.argv[2])
 
-figure_folder = Path("../figs/autoencoder/")
+figure_folder = Path("../figs/autoencoder/unet/")
 model_folder = Path("./")
 
-# train_dataset_path = Path("data/datasets/train/dataset_2000_100_5.pth")
-# test_dataset_path = Path("data/datasets/test/dataset_500_100_5.pth")
 if not train_dataset_path.exists():
     print(f"Path {train_dataset_path} does not exist")
     exit()
@@ -56,7 +54,7 @@ except Exception as e:
     print(f"Error while loading the dataset: {e}")
     exit()
 
-model = Autoencoder_conv()
+model = Autoencoder_unet()
 
 optimizer = optim.Adam(model.parameters(), lr=learning_rate)
 
@@ -85,7 +83,7 @@ for epoch in trange(epochs):
     
     test_loss = 0.0
     
-    for i, batch in enumerate(test_loader):
+    for batch in test_loader:
         img, _, mask, _ = batch
         output = model(img)
         
@@ -102,7 +100,7 @@ if not figure_folder.exists():
     
 
 print("Saving model")
-th.save(model.state_dict(), model_folder / "autoencoder.pth")
+th.save(model.state_dict(), model_folder / "autoencoder_unet.pth")
 print("Model saved")
 
 print("Saving training loss plot")
