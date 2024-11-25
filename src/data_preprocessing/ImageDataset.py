@@ -1,37 +1,47 @@
 from torch.utils.data import Dataset
-import numpy as np
 
 class CustomImageDataset(Dataset):
-    def __init__(self, data_list: list):
+    def __init__(self, dataset: dict):
         """Custom dataset for images
 
         Args:
-            data_dict (dict): dictionary with the images data, where the key is the image name and the value is the image tensor. The key should be made as <class_name>_<image_number>
+            dataset (dict): A dictionary with the following keys: 'images', 'labels', 'masks'
         """
         
-        assert isinstance(data_list, list), "The data_list should be a list"
-        assert len(data_list) > 0, "The data_list should have at least one element"
-        assert isinstance(data_list[0], tuple), "The data_list elements should be tuples"
-        assert len(data_list[0]) == 2, "The data_list elements should have two elements"
+        assert isinstance(dataset, dict), "The dataset should be a dictionary"
+        assert "images" in dataset.keys(), "The dataset should have a key 'images'"
+        assert "labels" in dataset.keys(), "The dataset should have a key 'labels'"
+        assert "masks" in dataset.keys(), "The dataset should have a key 'masks'"
+        assert "targets" in dataset.keys(), "The dataset should have a key 'targets'"
         
-        self.data = []
-        self.labels = []
-        
-        for image, label in data_list:
-            self.labels.append(label)
-            self.data.append(image)
-            
-        self.data = np.array(self.data)
-        self.labels = np.array(self.labels)
+        self.data = dataset["images"]
+        self.labels = dataset["labels"]
+        self.masks = dataset["masks"]
+        self.targets = dataset["targets"]
     
-    def __len__(self):
+    def __len__(self) -> int:
+        """Returns the length of the dataset
+
+        Returns:
+            int: The length of the dataset
+        """
         return len(self.data)
     
-    def __getitem__(self, idx):
+    def __getitem__(self, idx: int) -> tuple:
+        """Returns the image, label and mask at the given index
+
+        Args:
+            idx (int): The index of the image, label and mask
+
+        Returns:
+            tuple: A tuple containing the image, label and mask at the given index
+        """
         image = self.data[idx]
         label = self.labels[idx]
+        mask = self.masks[idx]
+        target = self.targets[idx]
         
-        return image, label
+        return image, label, mask, target
     
     
             
