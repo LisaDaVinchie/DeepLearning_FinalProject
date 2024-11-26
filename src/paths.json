@@ -1,0 +1,30 @@
+{
+    "paths": [
+        {
+            "name": "data",
+            "path": "../data"
+        },
+        {
+            "name": "figures",
+            "path": "../figs/"
+        },
+        {
+            "name": "data_kinds",
+            "weights": "weights",
+            "inpainting": "inpainting_results",
+            "datasets": "datasets"
+        }
+
+    ],
+
+    "combos": [
+        {
+            "name": "combo1",
+            "path": [
+                "path1",
+                "path2",
+                "path3"
+            ]
+        }
+    ]
+}
