@@ -18,8 +18,34 @@ if len(sys.argv) < 3:
 train_dataset_path = Path(sys.argv[1])
 test_dataset_path = Path(sys.argv[2])
 
-figure_folder = Path("../figs/autoencoder/unet/")
-model_folder = Path("./")
+
+
+N_TRAIN = 10000
+N_TEST = 1000
+N_CLASSES = 50
+HOLE_PERCENTAGE = 5
+
+identifier = f"{N_TRAIN}_{N_TEST}_{N_CLASSES}_{HOLE_PERCENTAGE}"
+
+model_folder = Path("../data/weights/autoencoder/")
+weights_folder = Path("../data/weights/autoencoder/")
+figure_folder = Path("../figs/losses/autoencoder/")
+
+variation = "unet"
+
+if variation == "vanilla":
+    model = Autoencoder_conv()
+    figure_path = Path(figure_folder / f"vanilla_{identifier}.png")
+    model_weights_name = f"vanilla_{identifier}.pth"
+    
+elif variation == "unet":
+    model = Autoencoder_unet()
+    figure_path = Path(figure_folder / f"unet_{identifier}.png")
+    model_weights_name = f"unet_{identifier}.pth"
+    
+else:
+    print("Invalid variation")
+    exit()
 
 if not train_dataset_path.exists():
     print(f"Path {train_dataset_path} does not exist")
@@ -30,7 +56,7 @@ if not test_dataset_path.exists():
     exit()
 
 batch_size = 32
-epochs = 8
+epochs = 10
 learning_rate = 0.01
 
 print("Loading datasets")
@@ -54,8 +80,6 @@ except Exception as e:
     print(f"Error while loading the dataset: {e}")
     exit()
 
-model = Autoencoder_unet()
-
 optimizer = optim.Adam(model.parameters(), lr=learning_rate)
 
 print("Starting training")
@@ -67,8 +91,8 @@ for epoch in trange(epochs):
     train_loss = 0.0
     for i, batch in enumerate(train_loader):
         optimizer.zero_grad()
-        img, _, mask, _ = batch
-        output = model(img)
+        img, mask, label, hole, target = batch
+        output = model(hole)
         
         loss = batch_MSE_loss(output, img, mask)
         train_loss += loss.item()
@@ -84,8 +108,8 @@ for epoch in trange(epochs):
     test_loss = 0.0
     
     for batch in test_loader:
-        img, _, mask, _ = batch
-        output = model(img)
+        img, mask, label, hole, target = batch
+        output = model(hole)
         
         loss = batch_MSE_loss(output, img, mask)
         test_loss += loss.item()
@@ -94,20 +118,21 @@ for epoch in trange(epochs):
     
     
 print(f"Training finished in {time.time() - start_time} seconds")
-
-if not figure_folder.exists():
-    figure_folder.mkdir(parents=True, exist_ok=True)
     
 
 print("Saving model")
-th.save(model.state_dict(), model_folder / "autoencoder_unet.pth")
+if not model_folder.exists():
+    model_folder.mkdir(parents=True, exist_ok=True)
+th.save(model.state_dict(), model_folder / model_weights_name)
 print("Model saved")
 
 print("Saving training loss plot")
+if not figure_folder.exists():
+    figure_folder.mkdir(parents=True, exist_ok=True)
 plt.plot(train_losses, label="Train")
 plt.plot(test_losses, label="Test")
 plt.legend()
 plt.xlabel("Epoch")
 plt.ylabel("Loss")
 plt.title("Training Loss")
-plt.savefig(figure_folder / "losses.png")
+plt.savefig(figure_path)
