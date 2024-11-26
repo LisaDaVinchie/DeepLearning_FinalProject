@@ -6,17 +6,16 @@ import torch as th
 import sys
 from dataset_masking.masks import SquareMask
 
-if len(sys.argv) < 4:
-    sys.exit("Usage: python create_dataset.py <original_images_path> <train_dataset_path> <test_dataset_path>")
+if len(sys.argv) < 7:
+    sys.exit("Usage: python create_dataset.py <original_images_path> <train_dataset_path> <test_dataset_path> <total_train_images> <total_test_images> <n_classes> <mask_percentage>")
 
 original_images_path = Path(sys.argv[1])
 train_folder = Path(sys.argv[2])
 test_folder = Path(sys.argv[3])
-
-# Declare the total number of images and classes
-total_train_images: int = 1000
-total_test_images = 1500
-n_classes = 100
+total_train_images = int(sys.argv[4])
+total_test_images = int(sys.argv[5])
+n_classes = int(sys.argv[6])
+mask_percentage = int(sys.argv[7])
 
 if not original_images_path.exists():
     sys.exit("The original images folder does not exist.")
@@ -33,7 +32,6 @@ dataset_extension: str = ".pth"
 # Declare the image width and height and calculate the number of pixels in the square mask
 image_width: int = 64
 image_height: int = 64
-mask_percentage: int = 5 # 5% of the image
 
 n_pixels = int((mask_percentage / 100) * image_width * image_height)
 
@@ -60,6 +58,7 @@ mask_class = SquareMask(image_width, image_height, n_pixels)
 def extract_image_info(image_list: list):
     tensor_list = [None] * len(image_list)
     mask_list = [None] * len(image_list)
+    hole_list = [None] * len(image_list)
     target_list = [None] * len(image_list)
     
     for i, image in enumerate(image_list):
@@ -72,26 +71,27 @@ def extract_image_info(image_list: list):
         mask = mask_class.create_square_mask()
         target = tensor_image * mask
         
+        hole_list[i] = tensor_image * (~mask)
         tensor_list[i] = tensor_image
         mask_list[i] = mask
         target_list[i] = target
-    return tensor_list, mask_list, target_list
+    return tensor_list, mask_list, hole_list, target_list
 
 # Iterate over the train images class folders
 print(f"Creating the dataset with:\n{total_train_images} train images\n{total_test_images} test images\n{n_classes} classes\n{mask_percentage}% mask")
 
 # Declare the lists to store the images, labels and masks
 train_images_list = [None] * total_train_images
-train_labels_list = [None] * total_train_images
-train_targets_list = [None] * total_train_images
 train_masks_list = [None] * total_train_images
 train_labels_list = [None] * total_train_images
+train_targets_list = [None] * total_train_images
+train_holes_list = [None] * total_train_images
 
 test_images_list = [None] * total_test_images
-test_labels_list = [None] * total_test_images
-test_targets_list = [None] * total_test_images
 test_masks_list = [None] * total_test_images
 test_labels_list = [None] * total_test_images
+test_holes_list = [None] * total_test_images
+test_targets_list = [None] * total_test_images
 
 # Iterate over the train images class folders
 i: int = 0
@@ -114,19 +114,35 @@ for folder in random.sample(folder_list, n_classes):
     test_images = random.sample(candidate_test_images, test_images_per_class)
             
     # Iterate over the train images
-    train_images_list[i:i + train_images_per_class], train_masks_list[i:i + train_images_per_class], train_targets_list[i:i + train_images_per_class] = extract_image_info(train_images)
+    train_images_list[i:i + train_images_per_class], train_masks_list[i:i + train_images_per_class], train_holes_list[i:i + train_images_per_class], train_targets_list[i:i + train_images_per_class] = extract_image_info(train_images)
+    
     train_labels_list[i:i + train_images_per_class] = [label] * train_images_per_class
     i += train_images_per_class
     
     # Iterate over the test images
-    test_images_list[j:j + test_images_per_class], test_masks_list[j:j + test_images_per_class], test_targets_list[j:j + test_images_per_class] = extract_image_info(test_images)
+    test_images_list[j:j + test_images_per_class], test_masks_list[j:j + test_images_per_class], test_holes_list[j:j + test_images_per_class], test_targets_list[j:j + test_images_per_class] = extract_image_info(test_images)
+    
     test_labels_list[j:j + test_images_per_class] = [label] * test_images_per_class
     j += test_images_per_class
     
 print("Lists created.")
         
-train_data = {"images": train_images_list, "labels": train_labels_list, "targets": train_targets_list, "masks": train_masks_list}
-test_data = {"images": test_images_list, "labels": test_labels_list, "targets": test_targets_list, "masks": test_masks_list}
+train_data = {"images": train_images_list,
+              "masks": train_masks_list,
+              "labels": train_labels_list,
+              "holes": train_holes_list,
+              "targets": train_targets_list}
+test_data = {"images": test_images_list,
+             "masks": test_masks_list,
+             "labels": test_labels_list,
+             "holes": test_holes_list,
+             "targets": test_targets_list}
+
+for data in [train_data, test_data]:
+    for key in data.keys():
+        if any([x is None for x in data[key]]):
+            print(f"Error in the {key} list.")
+            exit()
 
 print("Datasets created.")
 
