@@ -1,0 +1,20 @@
+# Do not track the following files
+
+# Test notebook
+src/test.ipynb
+
+# Python cache
+*/__pycache__/*
+*.log
+*.pyc
+
+# MacOS specific files
+*/.DS_Store
+
+# Datasets
+data/datasets/*.zip
+data/datasets/*.pth
+data/datasets/*.pt
+
+# Sample inpainting figures
+figs/inpainting_results/*
