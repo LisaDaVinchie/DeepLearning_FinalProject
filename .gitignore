@@ -12,9 +12,10 @@ src/test.ipynb
 */.DS_Store
 
 # Datasets
-data/datasets/*/*.zip
-data/datasets/*/*.pth
-data/datasets/*/*.pt
+data/*/*/*.zip
+data/*/*/*.pth
+data/*/*/*.pt
+
 
 # Sample inpainting figures
 figs/inpainting_results/*
