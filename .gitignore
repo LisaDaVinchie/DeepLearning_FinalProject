@@ -8,8 +8,8 @@ src/test.ipynb
 *.log
 *.pyc
 
-# MacOS specific files
-*/.DS_Store
+# # MacOS specific files
+# */.DS_Store
 
 # Datasets
 data/datasets/*.zip
