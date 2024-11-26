@@ -5,9 +5,10 @@ PREPROCESSING_FOLDER = $(SRC_FOLDER)/data_preprocessing
 DATA_FOLDER = ../data
 DATASET_FOLDER = $(DATA_FOLDER)/datasets
 TINY_IMAGENET_FOLDER = ../../tiny-imagenet-200/train
-N_TRAIN = 2000
-N_TEST = 500
+N_TRAIN = 10000
+N_TEST = 1000
 N_CLASSES = 50
+HOLE_PERCENTAGE = 5
 
 PYTHONPATH = $(SRC_FOLDER)
 
@@ -17,7 +18,7 @@ PYTHONPATH = $(SRC_FOLDER)
 
 run:
 	@echo "Creating train dataset..."
-	python3 $(PREPROCESSING_FOLDER)/create_dataset.py $(TINY_IMAGENET_FOLDER) $(DATASET_FOLDER)/train $(DATASET_FOLDER)/test
+	python3 $(PREPROCESSING_FOLDER)/create_dataset.py $(TINY_IMAGENET_FOLDER) $(DATASET_FOLDER)/train $(DATASET_FOLDER)/test $(N_TRAIN) $(N_TEST) $(N_CLASSES) $(HOLE_PERCENTAGE)
 
 zip:
 	@echo "Zipping dataset..."

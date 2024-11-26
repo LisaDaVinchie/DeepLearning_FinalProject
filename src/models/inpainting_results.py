@@ -5,27 +5,50 @@ from pathlib import Path
 from matplotlib import pyplot as plt
 import numpy as np
 
-# Load test data
-test_data = th.load("../../data/datasets/test/dataset_500_100_5.pth")
+N_TRAIN = 10000
+N_TEST = 1000
+N_CLASSES = 50
+HOLE_PERCENTAGE = 5
 
-variation = "unet"
+identifier = f"{N_TRAIN}_{N_TEST}_{N_CLASSES}_{HOLE_PERCENTAGE}"
+
+# Load test data
+test_data_path = Path(f"../../data/datasets/test/dataset_{N_TEST}_{N_CLASSES}_{HOLE_PERCENTAGE}.pth")
+
+if not Path(test_data_path).exists():
+    print(f"Path {test_data_path} does not exist")
+    exit()
+    
+weights_folder = Path("../../data/weights/autoencoder/")
+figures_base_folder = Path("../../figs/inpainting_results/autoencoder/")
+
+test_data = th.load(test_data_path)
+
+variation = "vanilla"
 
 if variation == "vanilla":
-    figures_folder = Path("../../figs/autoencoder/vanilla/inpainting_results/")
+    figures_folder = Path(figures_base_folder / f"vanilla/{identifier}/")
     # Load model
     model = Autoencoder_conv()
     # Load model state
-    model.load_state_dict(th.load("../autoencoder.pth"))
+    weights_path = weights_folder / f"vanilla_{identifier}.pth"
     
 elif variation == "unet":
-    figures_folder = Path("../../figs/autoencoder/unet/inpainting_results/")
+    figures_folder = Path(figures_base_folder / f"unet/{identifier}/")
     # Load model
     model = Autoencoder_unet()
     # Load model state
-    model.load_state_dict(th.load("../autoencoder_unet.pth"))
+    weights_path = weights_folder / f"unet_{identifier}.pth"
+    
 else:
     print("Invalid variation")
     exit()
+
+if not weights_path.exists():
+    print(f"Weights path {weights_path} does not exist")
+    exit()
+
+model.load_state_dict(th.load(weights_path))
 
 index = np.arange(len(test_data["images"]))
 
@@ -36,10 +59,11 @@ for i in random.choices(index, k=5):
     # Inpainting
     original_image = test_data["images"][i]
     mask = test_data["masks"][i]
+    hole_image = test_data["holes"][i]
         
-    inpainted_image = model(original_image).detach()
+    inpainted_image = model(hole_image).detach()
     
-    image_with_inpainting = original_image * (1 - mask) + inpainted_image * mask
+    image_with_inpainting = hole_image * (1 - mask) + inpainted_image * mask
 
     # Save inpainted image
     fig, axs = plt.subplots(1, 2, figsize=(10, 5))
