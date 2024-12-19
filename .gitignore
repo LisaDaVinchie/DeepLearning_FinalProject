@@ -4,17 +4,25 @@
 src/test.ipynb
 
 # Python cache
-*/__pycache__/*
+**__pycache__
 *.log
 *.pyc
 
 # MacOS specific files
-*/.DS_Store
+**/.DS_Store
+./DS_Store
+
+# Windows specific files
+**/Thumbs.db
+./Thumbs.db
+
+# Jupyter notebook checkpoints
+**/.ipynb_checkpoints
 
 # Datasets
-data/*/*/*.zip
-data/*/*/*.pth
-data/*/*/*.pt
+data/**/*.zip
+data/**/*.pth
+data/**/*.pt
 
 
 # Sample inpainting figures
