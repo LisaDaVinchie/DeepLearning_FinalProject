@@ -20,9 +20,7 @@ src/test.ipynb
 **/.ipynb_checkpoints
 
 # Datasets
-data/**/*.zip
-data/**/*.pth
-data/**/*.pt
+data/*
 
 
 # Sample inpainting figures
