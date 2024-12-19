@@ -12,13 +12,13 @@ class CustomImageDataset(Dataset):
         assert "images" in dataset.keys(), "The dataset should have a key 'images'"
         assert "labels" in dataset.keys(), "The dataset should have a key 'labels'"
         assert "masks" in dataset.keys(), "The dataset should have a key 'masks'"
-        assert "holes" in dataset.keys(), "The dataset should have a key 'holes'"
+        assert "masked_img" in dataset.keys(), "The dataset should have a key 'masked_img'"
         assert "targets" in dataset.keys(), "The dataset should have a key 'targets'"
         
         self.data = dataset["images"]
         self.labels = dataset["labels"]
         self.masks = dataset["masks"]
-        self.holes = dataset["holes"]
+        self.masked_img = dataset["masked_img"]
         self.targets = dataset["targets"]
     
     def __len__(self) -> int:
@@ -42,9 +42,9 @@ class CustomImageDataset(Dataset):
         label = self.labels[idx]
         mask = self.masks[idx]
         target = self.targets[idx]
-        hole = self.holes[idx]
+        masked_img = self.masked_img[idx]
         
-        return image, mask, label, hole, target
+        return image, mask, label, masked_img, target
     
     
             

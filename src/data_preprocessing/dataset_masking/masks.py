@@ -8,8 +8,6 @@ class SquareMask:
         square_width = int(np.sqrt(n_pixels))
         self.half_square_width = square_width // 2
         
-    
-
     def create_square_mask(self) -> np.ndarray:
         """Create a square mask of n_pixels in the image
 

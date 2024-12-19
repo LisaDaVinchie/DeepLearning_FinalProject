@@ -23,9 +23,9 @@ test_dataset_path = Path(sys.argv[2])
 N_TRAIN = 10000
 N_TEST = 1000
 N_CLASSES = 50
-HOLE_PERCENTAGE = 5
+MASK_PERCENTAGE = 5
 
-identifier = f"{N_TRAIN}_{N_TEST}_{N_CLASSES}_{HOLE_PERCENTAGE}"
+identifier = f"{N_TRAIN}_{N_TEST}_{N_CLASSES}_{MASK_PERCENTAGE}"
 
 model_folder = Path("../data/weights/autoencoder/")
 weights_folder = Path("../data/weights/autoencoder/")
@@ -91,8 +91,8 @@ for epoch in trange(epochs):
     train_loss = 0.0
     for i, batch in enumerate(train_loader):
         optimizer.zero_grad()
-        img, mask, label, hole, target = batch
-        output = model(hole)
+        img, mask, label, masked_image, target = batch
+        output = model(masked_image)
         
         loss = batch_MSE_loss(output, img, mask)
         train_loss += loss.item()
@@ -108,8 +108,8 @@ for epoch in trange(epochs):
     test_loss = 0.0
     
     for batch in test_loader:
-        img, mask, label, hole, target = batch
-        output = model(hole)
+        img, mask, label, masked_image, target = batch
+        output = model(masked_image)
         
         loss = batch_MSE_loss(output, img, mask)
         test_loss += loss.item()
