@@ -24,15 +24,15 @@ run:
 
 zip:
 	@echo calling make -f preprocessing.mk zip
-	make -f preprocessing.mk zip
+	cd data_preprocessing && make zip
 
 unzip:
 	@echo calling make -f preprocessing.mk unzip
-	make -f preprocessing.mk unzip
+	cd data_preprocessing && make unzip
 
 clean:
 	@echo calling make -f preprocessing.mk clean
-	make -f preprocessing.mk clean
+	cd data_preprocessing && make clean
 
 help:
 	@echo "Usage: make [target]"

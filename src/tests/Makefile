@@ -1,4 +1,4 @@
-SRC_FOLDER = $(shell pwd)
+SRC_FOLDER = ../
 TEST_FOLDER = $(SRC_FOLDER)/tests
 PYTHONPATH = $(SRC_FOLDER)
 

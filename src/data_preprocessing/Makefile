@@ -1,6 +1,6 @@
-MAKE = make -f preprocessing.mk
+MAKE = make
 
-SRC_FOLDER = $(shell pwd)
+SRC_FOLDER = ../
 PREPROCESSING_FOLDER = $(SRC_FOLDER)/data_preprocessing
 DATA_FOLDER = ../data
 DATASET_FOLDER = $(DATA_FOLDER)/datasets
@@ -34,7 +34,7 @@ clean:
 	rm -rf $(DATASET_FOLDER)/test/*.pth
 
 help:
-	@echo "Usage: make -f preprocessing.mk [target]"
+	@echo "Usage: make [target]"
 	@echo ""
 	@echo "Targets:"
 	@echo "  run: Create train dataset from tiny-imagenet-200"
