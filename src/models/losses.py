@@ -32,3 +32,7 @@ def batch_MSE_loss(output: th.tensor, target: th.tensor, mask: th.tensor) -> th.
         loss += th.mean((output[i] - target[i]) ** 2 * mask[i])
         
     return loss / images_per_batch
+
+    # squared_errors = (output - target) ** 2 * mask
+    
+    # return squared_errors.sum() / mask.sum()
