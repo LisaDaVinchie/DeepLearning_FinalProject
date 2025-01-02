@@ -46,8 +46,6 @@ EMBED_DIM = 1024
 NUM_HEADS = 16
 NUM_LAYERS = 8
 
-model = TransformerInpainting(img_size=IMG_SIZE, patch_size=PATCH_SIZE, embed_dim=EMBED_DIM, num_heads=NUM_HEADS, num_layers=NUM_LAYERS)
-
 if not train_dataset_path.exists():
     print(f"Path {train_dataset_path} does not exist")
     exit()
@@ -61,7 +59,7 @@ try:
     train_dataset = th.load(train_dataset_path)
     print("Train dataset loaded")
     th_dataset = CustomImageDataset(train_dataset)
-    train_loader = DataLoader(th_dataset, batch_size=batch_size, shuffle=True)
+    train_loader = DataLoader(th_dataset, batch_size=batch_size, shuffle=True, pin_memory=True, num_workers=4)
     print("Train dataLoader created")
 except Exception as e:
     print(f"Error while loading the dataset: {e}")
@@ -71,12 +69,15 @@ try:
     test_dataset = th.load(test_dataset_path)
     print("Test dataset loaded")
     th_dataset = CustomImageDataset(test_dataset)
-    test_loader = DataLoader(th_dataset, batch_size=batch_size, shuffle=True)
+    test_loader = DataLoader(th_dataset, batch_size=batch_size, shuffle=True, pin_memory=True, num_workers=4)
     print("Test dataLoader created")
 except Exception as e:
     print(f"Error while loading the dataset: {e}")
     exit()
 
+model = TransformerInpainting(img_size=IMG_SIZE, patch_size=PATCH_SIZE, embed_dim=EMBED_DIM, num_heads=NUM_HEADS, num_layers=NUM_LAYERS)
+device = th.device("cuda" if th.cuda.is_available() else "cpu")
+model = model.to(device)
 optimizer = optim.Adam(model.parameters(), lr=learning_rate)
 
 print("Starting training")
@@ -88,7 +89,8 @@ for epoch in trange(epochs):
     train_loss = 0.0
     for i, batch in enumerate(train_loader):
         optimizer.zero_grad()
-        img, mask, label, masked_image, target = batch
+        img.to(device)
+        mask.to(device)
         output = model(img, mask)
         
         loss = batch_MSE_loss(output, img, mask)
@@ -102,20 +104,22 @@ for epoch in trange(epochs):
     
     model.eval()
     
-    test_loss = 0.0
-    
-    for batch in test_loader:
-        img, mask, label, masked_image, target = batch
-        output = model(img, mask)
-        
-        loss = batch_MSE_loss(output, img, mask)
-        test_loss += loss.item()
-    test_losses.append(test_loss / len(test_loader))
-    
-    
-    
+    with th.no_grad():
+        test_loss = 0.0
+        for batch in test_loader:
+            img, mask, label, masked_image, target = batch
+            img.to(device)
+            mask.to(device)
+            output = model(img, mask)
+            
+            loss = batch_MSE_loss(output, img, mask)
+            test_loss += loss.item()
+        test_losses.append(test_loss / len(test_loader))
 print(f"Training finished in {time.time() - start_time} seconds")
-    
+
+loss_data = {"train": train_losses, "test": test_losses}
+with open("losses.json", "w") as f:
+    json.dump(loss_data, f)
 
 print("Saving model")
 if not weights_path.parent.exists():
