@@ -2,9 +2,9 @@ import matplotlib.pyplot as plt
 from pathlib import Path
 from torch.utils.data import DataLoader
 import torch as th
-from data_preprocessing.ImageDataset import CustomImageDataset
-from transformer import TransformerInpainting
-from models.losses import batch_MSE_loss
+from DeepLearning_FinalProject.src.models.ImageDataset import CustomImageDataset
+from autoencoder import Autoencoder_conv, Autoencoder_unet
+from losses import batch_MSE_loss
 import torch.optim as optim
 from tqdm.auto import trange
 import time
@@ -13,14 +13,21 @@ import argparse
 print("Imported all libraries")
 
 parser = argparse.ArgumentParser()
-parser.add_argument("--paths", type=Path, required=True, help="Path to the paths config file")
-parser.add_argument("--params", type=Path, required=True, help="Path to the parameters config file")
+parser.add_argument("--n_train", type=int, required=True, help="Number of training samples")
+parser.add_argument("--n_test", type=int, required=True, help="Number of testing samples")
+parser.add_argument("--n_classes", type=int, required=True, help="Number of classes in the dataset")
+parser.add_argument("--mask_percentage", type=float, required=True, help="Percentage of the image to be masked")
+parser.add_argument("--config_path", type=Path, required=True, help="Path to the config file")
 
 args = parser.parse_args()
 
-paths_config_path = args.paths
+n_train = args.n_train
+n_test = args.n_test
+n_classes = args.n_classes
+mask_percentage = args.mask_percentage
+config_path = args.config_path
 
-with open(paths_config_path, "r") as f:
+with open(config_path, "r") as f:
     config = json.load(f)
 
 train_dataset_path = Path(config["train_path"])
@@ -28,28 +35,23 @@ test_dataset_path = Path(config["test_path"])
 weights_folder = Path(config["weights_folder"])
 losses_folder = Path(config["losses_folder"])
 
-params_config_path = args.params
-with open(params_config_path, "r") as f:
-    config = json.load(f)
-
-n_train = config["n_train"]
-n_test = config["n_test"]
-n_classes = config["n_classes"]
-mask_percentage = config["mask_percentage"]
-batch_size = config["batch_size"]
-learning_rate = config["learning_rate"]
-epochs = config["epochs"]
-
-IMG_SIZE = 64
-PATCH_SIZE = 16
-EMBED_DIM = 1024
-NUM_HEADS = 16
-NUM_LAYERS = 8
-
 identifier = f"{n_train}_{n_test}_{n_classes}_{mask_percentage}"
-figure_path = Path(losses_folder / f"transformer_{identifier}.png")
-model_weights_name = f"transformer_{identifier}.pth"
-model = TransformerInpainting(img_size=IMG_SIZE, patch_size=PATCH_SIZE, embed_dim=EMBED_DIM, num_heads=NUM_HEADS, num_layers=NUM_LAYERS)
+
+variation = "unet"
+
+if variation == "vanilla":
+    model = Autoencoder_conv()
+    figure_path = Path(losses_folder / f"vanilla_{identifier}.png")
+    model_weights_name = f"vanilla_{identifier}.pth"
+    
+elif variation == "unet":
+    model = Autoencoder_unet()
+    figure_path = Path(losses_folder / f"unet_{identifier}.png")
+    model_weights_name = f"unet_{identifier}.pth"
+    
+else:
+    print("Invalid variation")
+    exit()
 
 if not train_dataset_path.exists():
     print(f"Path {train_dataset_path} does not exist")
@@ -58,6 +60,10 @@ if not train_dataset_path.exists():
 if not test_dataset_path.exists():
     print(f"Path {test_dataset_path} does not exist")
     exit()
+
+batch_size = 32
+epochs = 10
+learning_rate = 0.01
 
 print("Loading datasets")
 try:
@@ -92,7 +98,7 @@ for epoch in trange(epochs):
     for i, batch in enumerate(train_loader):
         optimizer.zero_grad()
         img, mask, label, masked_image, target = batch
-        output = model(img, mask)
+        output = model(masked_image)
         
         loss = batch_MSE_loss(output, img, mask)
         train_loss += loss.item()
@@ -109,7 +115,7 @@ for epoch in trange(epochs):
     
     for batch in test_loader:
         img, mask, label, masked_image, target = batch
-        output = model(img, mask)
+        output = model(masked_image)
         
         loss = batch_MSE_loss(output, img, mask)
         test_loss += loss.item()
