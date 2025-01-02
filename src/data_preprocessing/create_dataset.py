@@ -5,19 +5,35 @@ import random
 import torch as th
 import sys
 from dataset_masking.masks import SquareMask
+import json
+import argparse
 
-if len(sys.argv) < 7:
-    sys.exit("Usage: python create_dataset.py <original_images_path> <train_dataset_path> <test_dataset_path> <total_train_images> <total_test_images> <n_classes> <mask_percentage>")
+parser = argparse.ArgumentParser()
+parser.add_argument("--paths", type=Path, required=True, help="Path to the paths config file")
+parser.add_argument("--params", type=Path, required=True, help="Path to the parameters config file")
 
-original_images_path = Path(sys.argv[1])
-train_folder = Path(sys.argv[2])
-test_folder = Path(sys.argv[3])
-total_train_images = int(sys.argv[4])
-total_test_images = int(sys.argv[5])
-n_classes = int(sys.argv[6])
-mask_percentage = int(sys.argv[7])
+args = parser.parse_args()
 
-if not original_images_path.exists():
+paths_file_path = args.paths
+params_file_path = args.params
+
+with open (paths_file_path, "r") as f:
+    paths = json.load(f)
+
+with open (params_file_path, "r") as f:
+    params = json.load(f)
+
+original_images_folder = Path(paths["tiny_imagenet_folder"])
+train_path = Path(paths["train_path"])
+test_path = Path(paths["test_path"])
+n_train = int(params["n_train"])
+n_test = int(params["n_test"])
+n_classes = int(params["n_classes"])
+mask_percentage = int(params["mask_percentage"])
+image_width = int(params["image_width"])
+image_height = int(params["image_height"])
+
+if not original_images_folder.exists():
     sys.exit("The original images folder does not exist.")
 
 # Declare the path to the train images inner folder
@@ -30,13 +46,11 @@ images_extension: str = ".JPEG"
 dataset_extension: str = ".pth"
 
 # Declare the image width and height and calculate the number of pixels in the square mask
-image_width: int = 64
-image_height: int = 64
 
 n_pixels = int((mask_percentage / 100) * image_width * image_height)
 
 # Get a list of the train images class folders
-folder_list = [f for f in original_images_path.iterdir() if f.is_dir()]
+folder_list = [f for f in original_images_folder.iterdir() if f.is_dir()]
 
 if len(folder_list) <= 0:
     sys.exit("The train images folder is empty.")
@@ -45,12 +59,12 @@ if n_classes > len(folder_list):
     sys.exit(f"The train images folder contains {len(folder_list)} classes. The number of classes should be less than or equal to the number of classes in the train images folder.")
 
 # Calculate the number of classes and images per class
-train_images_per_class: int = total_train_images // n_classes
-test_images_per_class: int = total_test_images // n_classes
+train_images_per_class: int = n_train // n_classes
+test_images_per_class: int = n_test // n_classes
 
 # Check if the train images folder contains enough images to create the dataset
 if train_images_per_class + test_images_per_class > len(list(folder_list[0].glob(f"{image_subpath}/*{images_extension}"))):
-    sys.exit(f"The train images folder does not contain enough images to create the dataset with {total_train_images} train images and {total_test_images} test images.")
+    sys.exit(f"The train images folder does not contain enough images to create the dataset with {n_train} train images and {n_test} test images.")
 
 # Create the SquareMask object
 mask_class = SquareMask(image_width, image_height, n_pixels)
@@ -78,20 +92,20 @@ def extract_image_info(image_list: list):
     return tensor_list, mask_list, masked_images_list, target_list
 
 # Iterate over the train images class folders
-print(f"Creating the dataset with:\n{total_train_images} train images\n{total_test_images} test images\n{n_classes} classes\n{mask_percentage}% mask")
+print(f"Creating the dataset with:\n{n_train} train images\n{n_test} test images\n{n_classes} classes\n{mask_percentage}% mask")
 
 # Declare the lists to store the images, labels and masks
-train_images_list = [None] * total_train_images
-train_masks_list = [None] * total_train_images
-train_labels_list = [None] * total_train_images
-train_targets_list = [None] * total_train_images
-train_maskedimg_list = [None] * total_train_images
+train_images_list = [None] * n_train
+train_masks_list = [None] * n_train
+train_labels_list = [None] * n_train
+train_targets_list = [None] * n_train
+train_maskedimg_list = [None] * n_train
 
-test_images_list = [None] * total_test_images
-test_masks_list = [None] * total_test_images
-test_labels_list = [None] * total_test_images
-test_maskedimg_list = [None] * total_test_images
-test_targets_list = [None] * total_test_images
+test_images_list = [None] * n_test
+test_masks_list = [None] * n_test
+test_labels_list = [None] * n_test
+test_maskedimg_list = [None] * n_test
+test_targets_list = [None] * n_test
 
 # Iterate over the train images class folders
 i: int = 0
@@ -145,16 +159,12 @@ for data in [train_data, test_data]:
 
 print("Datasets created.")
 
-# Check if the destination folder exists
-train_folder.mkdir(parents=True, exist_ok=True)
-test_folder.mkdir(parents=True, exist_ok=True)
-
 # Save the dataset
 print("Saving the datasets.")
-destination_path = train_folder / f"dataset_{total_train_images}_{n_classes}_{mask_percentage}{dataset_extension}"
-th.save(train_data, destination_path)
-print(f"Train dataset saved in {destination_path}.")
+train_path.parent.mkdir(parents=True, exist_ok=True)
+th.save(train_data, train_path)
+print(f"Train dataset saved in {train_path}.")
 
-destination_path = test_folder / f"dataset_{total_test_images}_{n_classes}_{mask_percentage}{dataset_extension}"
-th.save(test_data, destination_path)
-print(f"Test dataset saved in {destination_path}.")
+test_path.parent.mkdir(parents=True, exist_ok=True)
+th.save(test_data, test_path)
+print(f"Test dataset saved in {test_path}.")
