@@ -21,7 +21,10 @@ src/test.ipynb
 
 # Datasets
 data/*
+figs/*
 
+# Json files
+*.json
 
 # Sample inpainting figures
 figs/inpainting_results/*
