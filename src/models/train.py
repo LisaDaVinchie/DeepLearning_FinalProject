@@ -59,7 +59,7 @@ try:
     train_dataset = th.load(train_dataset_path)
     print("Train dataset loaded")
     th_dataset = CustomImageDataset(train_dataset)
-    train_loader = DataLoader(th_dataset, batch_size=batch_size, shuffle=True, pin_memory=True, num_workers=4)
+    train_loader = DataLoader(th_dataset, batch_size=batch_size, shuffle=True, pin_memory=True)
     print("Train dataLoader created")
 except Exception as e:
     print(f"Error while loading the dataset: {e}")
@@ -69,7 +69,7 @@ try:
     test_dataset = th.load(test_dataset_path)
     print("Test dataset loaded")
     th_dataset = CustomImageDataset(test_dataset)
-    test_loader = DataLoader(th_dataset, batch_size=batch_size, shuffle=True, pin_memory=True, num_workers=4)
+    test_loader = DataLoader(th_dataset, batch_size=batch_size, shuffle=True, pin_memory=True)
     print("Test dataLoader created")
 except Exception as e:
     print(f"Error while loading the dataset: {e}")
@@ -77,6 +77,7 @@ except Exception as e:
 
 model = TransformerInpainting(img_size=IMG_SIZE, patch_size=PATCH_SIZE, embed_dim=EMBED_DIM, num_heads=NUM_HEADS, num_layers=NUM_LAYERS)
 device = th.device("cuda" if th.cuda.is_available() else "cpu")
+print(f"Using device: {device}")
 model = model.to(device)
 optimizer = optim.Adam(model.parameters(), lr=learning_rate)
 
@@ -88,6 +89,7 @@ for epoch in trange(epochs):
     model.train()
     train_loss = 0.0
     for i, batch in enumerate(train_loader):
+        img, mask, label, masked_image, target = batch
         optimizer.zero_grad()
         img.to(device)
         mask.to(device)
