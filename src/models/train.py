@@ -2,14 +2,15 @@ import matplotlib.pyplot as plt
 from pathlib import Path
 from torch.utils.data import DataLoader
 import torch as th
-from ImageDataset import CustomImageDataset
-from transformer.transformer import TransformerInpainting
 from losses import batch_MSE_loss
 import torch.optim as optim
 from tqdm.auto import trange
 import time
 import json
 import argparse
+from ImageDataset import CustomImageDataset
+from transformer.transformer import TransformerInpainting
+from get_workers_number import get_available_cpus
 print("Imported all libraries")
 
 parser = argparse.ArgumentParser()
@@ -80,6 +81,10 @@ device = th.device("cuda" if th.cuda.is_available() else "cpu")
 print(f"Using device: {device}")
 model = model.to(device)
 optimizer = optim.Adam(model.parameters(), lr=learning_rate)
+
+if device == th.device("cpu"):
+    n_workers = get_available_cpus()
+    th.set_num_threads(n_workers)
 
 print("Starting training")
 start_time = time.time()
