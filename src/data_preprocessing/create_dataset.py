@@ -82,14 +82,11 @@ def extract_image_info(image_list: list):
             print(f"Error opening image {image}: {e}")
             continue
         tensor_image = transforms.ToTensor()(img)
-        mask = mask_class.create_square_mask()
-        target = tensor_image * mask
+        mask = th.tensor(mask_class.create_square_mask()).unsqueeze(1).repeat(1, 3, 1, 1)
         
-        masked_images_list[i] = tensor_image * (~mask)
         tensor_list[i] = tensor_image
         mask_list[i] = mask
-        target_list[i] = target
-    return tensor_list, mask_list, masked_images_list, target_list
+    return tensor_list, mask_list
 
 # Iterate over the train images class folders
 print(f"Creating the dataset with:\n{n_train} train images\n{n_test} test images\n{n_classes} classes\n{mask_percentage}% mask")
@@ -98,14 +95,10 @@ print(f"Creating the dataset with:\n{n_train} train images\n{n_test} test images
 train_images_list = [None] * n_train
 train_masks_list = [None] * n_train
 train_labels_list = [None] * n_train
-train_targets_list = [None] * n_train
-train_maskedimg_list = [None] * n_train
 
 test_images_list = [None] * n_test
 test_masks_list = [None] * n_test
 test_labels_list = [None] * n_test
-test_maskedimg_list = [None] * n_test
-test_targets_list = [None] * n_test
 
 # Iterate over the train images class folders
 i: int = 0
@@ -127,13 +120,13 @@ for folder in random.sample(folder_list, n_classes):
     test_images = random.sample(candidate_test_images, test_images_per_class)
             
     # Iterate over the train images
-    train_images_list[i:i + train_images_per_class], train_masks_list[i:i + train_images_per_class], train_maskedimg_list[i:i + train_images_per_class], train_targets_list[i:i + train_images_per_class] = extract_image_info(train_images)
+    train_images_list[i:i + train_images_per_class], train_masks_list[i:i + train_images_per_class] = extract_image_info(train_images)
     
     train_labels_list[i:i + train_images_per_class] = [label] * train_images_per_class
     i += train_images_per_class
     
     # Iterate over the test images
-    test_images_list[j:j + test_images_per_class], test_masks_list[j:j + test_images_per_class], test_maskedimg_list[j:j + test_images_per_class], test_targets_list[j:j + test_images_per_class] = extract_image_info(test_images)
+    test_images_list[j:j + test_images_per_class], test_masks_list[j:j + test_images_per_class] = extract_image_info(test_images)
     
     test_labels_list[j:j + test_images_per_class] = [label] * test_images_per_class
     j += test_images_per_class
@@ -142,14 +135,10 @@ print("Lists created.")
         
 train_data = {"images": train_images_list,
               "masks": train_masks_list,
-              "labels": train_labels_list,
-              "masked_img": train_maskedimg_list,
-              "targets": train_targets_list}
+              "labels": train_labels_list}
 test_data = {"images": test_images_list,
              "masks": test_masks_list,
-             "labels": test_labels_list,
-             "masked_img": test_maskedimg_list,
-             "targets": test_targets_list}
+             "labels": test_labels_list}
 
 for data in [train_data, test_data]:
     for key in data.keys():
