@@ -10,11 +10,9 @@ class CustomImageDataset(Dataset):
         
         assert isinstance(dataset, dict), "The dataset should be a dictionary"
         assert "images" in dataset.keys(), "The dataset should have a key 'images'"
-        assert "labels" in dataset.keys(), "The dataset should have a key 'labels'"
         assert "masks" in dataset.keys(), "The dataset should have a key 'masks'"
         
         self.data = dataset["images"]
-        self.labels = dataset["labels"]
         self.masks = dataset["masks"]
     
     def __len__(self) -> int:
@@ -35,10 +33,9 @@ class CustomImageDataset(Dataset):
             tuple: A tuple containing the image, label and mask at the given index
         """
         image = self.data[idx]
-        label = self.labels[idx]
         mask = self.masks[idx]
         
-        return image, mask, label
+        return image, mask
     
     
             
