@@ -68,12 +68,11 @@ if train_images_per_class + test_images_per_class > len(list(folder_list[0].glob
 
 # Create the SquareMask object
 mask_class = SquareMask(image_width, image_height, n_pixels)
+print("Mask class created with the following parameters:", image_width, image_height, n_pixels)
 
 def extract_image_info(image_list: list):
     tensor_list = [None] * len(image_list)
     mask_list = [None] * len(image_list)
-    masked_images_list = [None] * len(image_list)
-    target_list = [None] * len(image_list)
     
     for i, image in enumerate(image_list):
         try:
@@ -82,7 +81,8 @@ def extract_image_info(image_list: list):
             print(f"Error opening image {image}: {e}")
             continue
         tensor_image = transforms.ToTensor()(img)
-        mask = th.tensor(mask_class.create_square_mask()).unsqueeze(1).repeat(1, 3, 1, 1)
+        mask = th.tensor(mask_class.create_square_mask()).unsqueeze(0).repeat(3, 1, 1)
+        # print(mask.shape)
         
         tensor_list[i] = tensor_image
         mask_list[i] = mask
@@ -139,6 +139,8 @@ train_data = {"images": train_images_list,
 test_data = {"images": test_images_list,
              "masks": test_masks_list,
              "labels": test_labels_list}
+
+print(f"Image shape: {train_images_list[0].shape}, masks shape: {train_masks_list[0].shape}")
 
 for data in [train_data, test_data]:
     for key in data.keys():
