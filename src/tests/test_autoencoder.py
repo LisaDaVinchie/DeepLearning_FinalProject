@@ -1,5 +1,5 @@
 import torch
-from models.autoencoder import simple_conv, conv_unet
+from models.autoencoder import simple_conv, conv_unet, conv_maxpool
 import pytest
 
 @pytest.mark.skip(reason="Helper function for testing")
@@ -15,7 +15,7 @@ def test_autoencoder_forward(model: torch.nn.Module):
 
     # Run forward pass
     with torch.no_grad():  # Disable gradient calculation for testing
-        output = model(input_image)
+        output = model(input_image, mask)
         target_region = output * mask
 
     # Assertions
@@ -25,7 +25,7 @@ def test_autoencoder_forward(model: torch.nn.Module):
     
     print("Forward pass test passed.")
     
-
+@pytest.mark.skip(reason="Helper function for testing")
 def test_mask_application():
     """Test that the mask is applied correctly"""
     batch_size = 1
@@ -48,19 +48,39 @@ def test_model_trainable(model: torch.nn.Module):
     
     print("Model trainable test passed.")
     
-def test_vanilla_autoencoder():
+@pytest.mark.skip(reason="Helper function for testing")
+def test_output_shape(model: torch.nn.Module):
+    """Test the output shape of the model"""
+    input_image = torch.rand(2, 3, 64, 64)  # Simulated input
+    mask = torch.zeros(2, 3, 64, 64, dtype=torch.bool)  # Mostly False
+    
+    output = model(input_image, mask)
+    
+    assert output.shape == (2, 3, 64, 64), "Output shape is incorrect."
+    
+def test_simple_conv():
     """Test the vanilla autoencoder"""
     model = simple_conv()
     test_autoencoder_forward(model)
     test_model_trainable(model)
     test_mask_application()
+    test_output_shape(model)
 
-def test_unet_autoencoder():
+def test_conv_unet():
     """Test the U-Net autoencoder"""
     model = conv_unet()
     test_autoencoder_forward(model)
     test_model_trainable(model)
     test_mask_application()
+    test_output_shape(model)
+    
+def test_conv_maxpool():
+    """Test the maxpool autoencoder"""
+    model = conv_maxpool(in_channels=3, middle_channels=[64, 128, 256, 512, 1024])
+    test_autoencoder_forward(model)
+    test_model_trainable(model)
+    test_mask_application()
+    test_output_shape(model)
     
     
 
