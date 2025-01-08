@@ -103,7 +103,7 @@ class conv_maxpool(nn.Module):
         ])
         
         # Output layer
-        self.output_conv = nn.Conv2d(middle_channels[1], 1, kernel_size, stride, padding=(kernel_size - 1) // 2)
+        self.output_conv = nn.Conv2d(middle_channels[1], in_channels, kernel_size, stride, padding=(kernel_size - 1) // 2)
         self.sigmoid = nn.Sigmoid()
     
     def _create_conv_block(self, in_channels, out_channels, kernel_size, stride, activation):
