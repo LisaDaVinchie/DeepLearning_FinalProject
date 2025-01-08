@@ -1,5 +1,5 @@
 import torch as th
-from autoencoder import Autoencoder_conv, Autoencoder_unet
+from models.autoencoder import simple_conv, conv_unet, conv_maxpool
 import random
 from pathlib import Path
 from matplotlib import pyplot as plt
@@ -29,14 +29,14 @@ variation = "vanilla"
 if variation == "vanilla":
     figures_folder = Path(figures_base_folder / f"vanilla/{identifier}/")
     # Load model
-    model = Autoencoder_conv()
+    model = simple_conv()
     # Load model state
     weights_path = weights_folder / f"vanilla_{identifier}.pth"
     
 elif variation == "unet":
     figures_folder = Path(figures_base_folder / f"unet/{identifier}/")
     # Load model
-    model = Autoencoder_unet()
+    model = conv_unet()
     # Load model state
     weights_path = weights_folder / f"unet_{identifier}.pth"
     
