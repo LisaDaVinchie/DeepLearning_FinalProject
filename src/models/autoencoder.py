@@ -56,6 +56,7 @@ class conv_unet(nn.Module):
         dec3 = nn.Sigmoid()(self.decoder3(dec2 + enc1))
         
         return dec3
+    
 class conv_maxpool(nn.Module):
     def __init__(self, in_channels: int, middle_channels: list, print_sizes: bool=False):
         super(conv_maxpool, self).__init__()
