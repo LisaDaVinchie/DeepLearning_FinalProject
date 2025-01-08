@@ -44,6 +44,7 @@ TINY_IMAGENET_FOLDER := $(DATA_FOLDER)/tiny-imagenet-200/train
 WEIGTHS_FOLDER := $(DATA_FOLDER)/weights
 LOSSES_DATA_FOLDER := $(DATA_FOLDER)/losses
 LR_DATA_FOLDER := $(DATA_FOLDER)/learning_rates
+TESTS_FOLDER := $(SRC_FOLDER)/tests
 
 TRAIN_PATH := $(DATASET_FOLDER)/train/dataset_$(N_TRAIN)_$(N_CLASSES)_$(MASK_PERCENTAGE).pth
 TEST_PATH := $(DATASET_FOLDER)/test/dataset_$(N_TEST)_$(N_CLASSES)_$(MASK_PERCENTAGE).pth
@@ -59,7 +60,7 @@ CONFIG_FILE_PARAMS := $(SRC_FOLDER)/params.json
 .DEFAULT:
 	@echo "Invalid target. Please run 'make help' for more information."
 
-.PHONY: config preprocess train
+.PHONY: config preprocess train test
 
 config:
 	@echo '{"tiny_imagenet_folder": "$(TINY_IMAGENET_FOLDER)", "train_path": "$(TRAIN_PATH)", "test_path": "$(TEST_PATH)", "weights_path": "$(WEIGTHS_PATH)", "loss_figure_path": "$(LOSS_FIGURE_PATH)", "loss_data_path": "$(LOSS_DATA_PATH)", "learning_rates_path": "$(LR_DATA_PATH)"}' > $(CONFIG_FILE_PATHS)
@@ -72,3 +73,7 @@ preprocess : config
 train: config
 	@echo "Training the model..."
 	$(PYTHON) $(TRAIN_CODE_PATH) --paths $(CONFIG_FILE_PATHS) --params $(CONFIG_FILE_PARAMS)
+
+test: config
+	@echo "Running test..."
+	PYTHONPATH=$(PYTHONPATH) pytest
