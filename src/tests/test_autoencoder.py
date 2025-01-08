@@ -1,5 +1,5 @@
 import torch
-from models.autoencoder import Autoencoder_conv, Autoencoder_unet
+from models.autoencoder import simple_conv, conv_unet
 import pytest
 
 @pytest.mark.skip(reason="Helper function for testing")
@@ -10,7 +10,7 @@ def test_autoencoder_forward(model: torch.nn.Module):
     # Create dummy inputs
     batch_size = 2
     input_image = torch.rand(batch_size, 3, 64, 64)  # Simulated input
-    mask = torch.zeros(batch_size, 1, 64, 64, dtype=torch.bool)  # Mostly False
+    mask = torch.zeros(batch_size, 3, 64, 64, dtype=torch.bool)  # Mostly False
     mask[:, :, 16:32, 16:32] = True  # Define a square mask (nxn)
 
     # Run forward pass
@@ -29,7 +29,7 @@ def test_autoencoder_forward(model: torch.nn.Module):
 def test_mask_application():
     """Test that the mask is applied correctly"""
     batch_size = 1
-    mask = torch.zeros(batch_size, 1, 64, 64, dtype=torch.bool)
+    mask = torch.zeros(batch_size, 3, 64, 64, dtype=torch.bool)
     mask[:, :, 16:32, 16:32] = True  # Define mask
     
     dummy_output = torch.rand(batch_size, 3, 64, 64)
@@ -50,14 +50,14 @@ def test_model_trainable(model: torch.nn.Module):
     
 def test_vanilla_autoencoder():
     """Test the vanilla autoencoder"""
-    model = Autoencoder_conv()
+    model = simple_conv()
     test_autoencoder_forward(model)
     test_model_trainable(model)
     test_mask_application()
 
 def test_unet_autoencoder():
     """Test the U-Net autoencoder"""
-    model = Autoencoder_unet()
+    model = conv_unet()
     test_autoencoder_forward(model)
     test_model_trainable(model)
     test_mask_application()
