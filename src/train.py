@@ -29,25 +29,37 @@ train_dataset_path = Path(config["train_path"])
 test_dataset_path = Path(config["test_path"])
 weights_path = Path(config["weights_path"])
 losses_figure_path = Path(config["loss_figure_path"])
+loss_data_path = Path(config["loss_data_path"])
+learning_rates_path = Path(config["learning_rates_path"])
 
 params_config_path = args.params
 with open(params_config_path, "r") as f:
     config = json.load(f)
 
+model_name = config["model_name"]
 n_train = int(config["n_train"])
 n_test = int(config["n_test"])
+n_channels = int(config["n_channels"])
 batch_size = int(config["batch_size"])
 learning_rate = float(config["learning_rate"])
 epochs = int(config["epochs"])
 scheduler = bool(config["scheduler"])
+initialize = bool(config["initialize"])
 sched_step = int(config["sched_step"])
 sched_gamma = bool(config["sched_gamma"])
 image_size = int(config["image_width"])
 
-PATCH_SIZE = 16
-EMBED_DIM = 1024
-NUM_HEADS = 16
-NUM_LAYERS = 8
+if model_name == "simple_conv":
+    model = autoencoder.simple_conv(in_channels=n_channels, middle_channels=[64, 128, 256])
+elif model_name == "conv_maxpool":
+    model = autoencoder.conv_maxpool(in_channels=n_channels, middle_channels=[64, 128, 256, 512, 1024])
+elif model_name == "conv_unet":
+    model = autoencoder.conv_unet(in_channels=n_channels, middle_channels=[64, 128, 256])
+elif model_name == "transformer":
+    model = TransformerInpainting(img_size=image_size, patch_size=16, embed_dim=1024, num_heads=16, num_layers=8)
+else:
+    print("Invalid model name")
+    exit()
 
 if not train_dataset_path.exists():
     print(f"Path {train_dataset_path} does not exist")
@@ -72,7 +84,6 @@ train_set = CustomImageDataset(test_dataset)
 test_loader = DataLoader(train_set, batch_size=batch_size, shuffle=False, pin_memory=True)
 print("Test dataLoader created")
 
-model = autoencoder.conv_unet(in_channels=3, middle_channels=[64, 128, 256])
 device = th.device("cuda" if th.cuda.is_available() else "cpu")
 print(f"Using device: {device}")
 model = model.to(device)
@@ -81,6 +92,14 @@ if scheduler:
     scheduler = th.optim.lr_scheduler.StepLR(optimizer, step_size=sched_step, gamma=sched_gamma)
 else:
     scheduler = None
+    
+def initialize_weights(module):
+    if isinstance(module, th.nn.Conv2d) or isinstance(module, th.nn.Linear):
+        th.nn.init.kaiming_normal_(module.weight, mode='fan_out', nonlinearity='relu')
+        if module.bias is not None:
+            th.nn.init.zeros_(module.bias)
+if initialize:
+    model.apply(initialize_weights)
 criterion = nn.MSELoss()
 
 if device == th.device("cpu"):
@@ -93,17 +112,19 @@ train_losses = []
 test_losses = []
 learning_rates = []
 
+def get_loss(model, device, criterion, image, mask):
+    image.to(device)
+    mask.to(device)
+    output = model(image, mask)
+    loss = criterion(output * mask, image * mask) / mask.sum()
+    return loss
+
 for epoch in trange(epochs):
     model.train()
     batch_loss = 0.0
-    for i, batch in enumerate(train_loader):
+    for batch in train_loader:
         image, mask = batch
-        optimizer.zero_grad()
-        image.to(device)
-        mask.to(device)
-        output = model(image, mask)
-        
-        loss = criterion(output * mask, image * mask) / mask.sum()
+        loss = get_loss(model, device, criterion, image, mask)
         batch_loss += loss.item()
         optimizer.zero_grad()
         loss.backward()
@@ -114,16 +135,12 @@ for epoch in trange(epochs):
     
     model.eval()
     with th.no_grad():
-        test_loss = 0.0
+        batch_loss = 0.0
         for batch in test_loader:
             image, mask = batch
-            image.to(device)
-            mask.to(device)
-            output = model(image, mask)
-            
-            loss = criterion(output * mask, image * mask) / mask.sum()
-            test_loss += loss.detach().item()
-        test_losses.append(test_loss / len(test_loader.dataset))
+            loss = get_loss(model, device, criterion, image, mask)
+            batch_loss += loss.detach().item()
+        test_losses.append(batch_loss / len(test_loader.dataset))
         
     if scheduler is not None:
         learning_rates.append(scheduler.get_last_lr()[0])
@@ -131,13 +148,16 @@ for epoch in trange(epochs):
         
 print(f"Training finished in {time.time() - start_time} seconds")
 
-loss_data = {"train": train_losses, "test": test_losses}
-with open("losses.json", "w") as f:
-    json.dump(loss_data, f)
+loss_data = th.stack([th.tensor(train_losses), th.tensor(test_losses)], dim=1).tolist()
+
+if not loss_data_path.parent.exists():
+    loss_data_path.parent.mkdir(parents=True, exist_ok=True)
+th.save(loss_data, loss_data_path)
     
 if scheduler is not None:
-    with open("learning_rates.json", "w") as f:
-        json.dump(learning_rates, f)
+    if not learning_rates_path.parent.exists():
+        learning_rates_path.parent.mkdir(parents=True, exist_ok=True)
+    th.save(learning_rates, learning_rates_path)
 
 print("Saving model")
 if not weights_path.parent.exists():
