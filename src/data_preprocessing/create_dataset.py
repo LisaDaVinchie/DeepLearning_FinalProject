@@ -17,6 +17,9 @@ args = parser.parse_args()
 paths_file_path = args.paths
 params_file_path = args.params
 
+assert paths_file_path.exists(), f"Paths file {paths_file_path} does not exist."
+assert params_file_path.exists(), f"Parameters file {params_file_path} does not exist."
+
 with open (paths_file_path, "r") as f:
     paths = json.load(f)
 
@@ -57,6 +60,11 @@ if len(folder_list) <= 0:
     
 if n_classes > len(folder_list):
     sys.exit(f"The train images folder contains {len(folder_list)} classes. The number of classes should be less than or equal to the number of classes in the train images folder.")
+
+if n_train % n_classes != 0:
+    sys.exit(f"The number of train images {n_train} is not divisible by the number of classes {n_classes}.")
+if n_test % n_classes != 0:
+    sys.exit(f"The number of test images {n_test} is not divisible by the number of classes {n_classes}.")
 
 # Calculate the number of classes and images per class
 train_images_per_class: int = n_train // n_classes
@@ -104,20 +112,22 @@ test_labels_list = [None] * n_test
 i: int = 0
 j: int = 0
 for folder in random.sample(folder_list, n_classes):
+    print(f"Processing class folder {folder.name}")
     # Get a list of the images in the class folder
     
     images = list((folder / image_subpath).glob(f"*{images_extension}"))
 
-    if len(images) <= 0:
-        print(f"The class folder {folder.name} does not contain any images.")
+    if len(images) <= train_images_per_class + test_images_per_class:
+        print(f"The class folder {folder.name} does not contain enough images.")
         continue
     
     # Get the label of the class folder
     label = folder.name
     
+    images = random.sample(images, train_images_per_class + test_images_per_class)
+    
     train_images = random.sample(images, train_images_per_class)
-    candidate_test_images = [image for image in images if image not in train_images]
-    test_images = random.sample(candidate_test_images, test_images_per_class)
+    test_images = [img for img in images if img not in train_images]
             
     # Iterate over the train images
     train_images_list[i:i + train_images_per_class], train_masks_list[i:i + train_images_per_class] = extract_image_info(train_images)
@@ -140,12 +150,10 @@ test_data = {"images": test_images_list,
              "masks": test_masks_list,
              "labels": test_labels_list}
 
-print(f"Image shape: {train_images_list[0].shape}, masks shape: {train_masks_list[0].shape}")
-
 for data in [train_data, test_data]:
     for key in data.keys():
         if any([x is None for x in data[key]]):
-            print(f"Error in the {key} list.")
+            print(f"Error in the {key} list: list not filled completely.")
             exit()
 
 print("Datasets created.")
