@@ -1,4 +1,5 @@
 from torch.utils.data import Dataset
+import torch as th
 
 class CustomImageDataset(Dataset):
     def __init__(self, dataset: dict):
@@ -14,6 +15,8 @@ class CustomImageDataset(Dataset):
         
         self.data = dataset["images"]
         self.masks = dataset["masks"]
+        
+        assert len(self.data) == len(self.masks), "Images and masks must have the same length"
     
     def __len__(self) -> int:
         """Returns the length of the dataset
@@ -32,8 +35,8 @@ class CustomImageDataset(Dataset):
         Returns:
             tuple: A tuple containing the image, label and mask at the given index
         """
-        image = self.data[idx]
-        mask = self.masks[idx]
+        image = th.tensor(self.data[idx], dtype=th.float32)
+        mask = th.tensor(self.masks[idx], dtype=th.float32)
         
         return image, mask
     
