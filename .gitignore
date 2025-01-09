@@ -3,6 +3,8 @@
 # Test notebook
 **.ipynb
 
+src/hyperparameter_optimization.py
+
 # Python cache
 **__pycache__
 *.log
