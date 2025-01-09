@@ -50,13 +50,41 @@ sched_gamma = bool(config["sched_gamma"])
 image_size = int(config["image_width"])
 
 if model_name == "simple_conv":
-    model = autoencoder.simple_conv(in_channels=n_channels, middle_channels=[64, 128, 256])
+    middle_channels = [int(x) for x in config["middle_layers"]]
+    kernel_sizes = int(config["kernel_sizes"])
+    strides = int(config["strides"])
+    paddings = int(config["paddings"])
+    output_paddings = int(config["output_paddings"])
+    model = autoencoder.simple_conv(in_channels=n_channels,
+                                    middle_channels=middle_channels,
+                                    kernel_sizes=kernel_sizes,
+                                    strides=strides,
+                                    paddings=paddings,
+                                    output_paddings=output_paddings)
 elif model_name == "conv_maxpool":
-    model = autoencoder.conv_maxpool(in_channels=n_channels, middle_channels=[64, 128, 256, 512, 1024])
+    middle_channels = [int(x) for x in config["middle_layers"]]
+    model = autoencoder.conv_maxpool(in_channels=n_channels,
+                                     middle_channels=middle_channels)
 elif model_name == "conv_unet":
-    model = autoencoder.conv_unet(in_channels=n_channels, middle_channels=[64, 128, 256])
+    middle_channels = [int(x) for x in config["middle_layers"]]
+    kernel_sizes = int(config["kernel_sizes"])
+    strides = int(config["strides"])
+    paddings = int(config["paddings"])
+    output_paddings = int(config["output_paddings"])
+    model = autoencoder.conv_unet(in_channels=n_channels,
+                                  middle_channels=middle_channels,
+                                  kernel_sizes=kernel_sizes,
+                                  strides=strides)
 elif model_name == "transformer":
-    model = TransformerInpainting(img_size=image_size, patch_size=16, embed_dim=1024, num_heads=16, num_layers=8)
+    patch_size = int(config["patch_size"])
+    embedding_dim = int(config["embedding_dim"])
+    num_heads = int(config["num_heads"])
+    num_layers = int(config["num_layers"])
+    model = TransformerInpainting(img_size=image_size,
+                                  patch_size=patch_size,
+                                  embed_dim=embedding_dim,
+                                  num_heads=num_heads,
+                                  num_layers=num_layers)
 else:
     print("Invalid model name")
     exit()
@@ -168,6 +196,8 @@ print("Model saved")
 print("Saving training loss plot")
 if not losses_figure_path.parent.exists():
     losses_figure_path.parent.mkdir(parents=True, exist_ok=True)
+
+plt.figure()
 plt.plot(train_losses, label="Train")
 plt.plot(test_losses, label="Test")
 plt.legend()
