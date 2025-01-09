@@ -12,7 +12,12 @@ INITIALIZE := True
 LR_SCHEDULER := True
 STEP_SIZE := 1
 GAMMA := LEARNING_RATE / EPOCHS
+
+# simple_conv, conv_unet, conv_maxpool, transformer
 MODEL_NAME := conv_maxpool
+
+# cifar10, tinyimagenet
+DATASET_NAME := tinyimagenet
 
 ifeq ($(MODEL_NAME), simple_conv)
 	MIDDLE_LAYERS := 64 128 256
@@ -37,8 +42,6 @@ else ifeq ($(MODEL_NAME), transformer)
 	EMBEDDING_DIM := 1024
 	NUM_HEADS := 16
 	NUM_LAYERS := 8
-else
-	@echo "Invalid model name. Please run 'make help' for more information."
 endif
 
 MODEL_IDENTIFIER := $(N_TRAIN)_$(N_TEST)_$(N_CLASSES)_$(MASK_PERCENTAGE)_$(EPOCHS)_$(BATCH_SIZE)_$(LEARNING_RATE)
@@ -66,13 +69,18 @@ MODELS_FOLDER := $(SRC_FOLDER)/models
 PREPROCESSING_FOLDER := $(SRC_FOLDER)/data_preprocessing
 
 CODE_FOLDER := $(MODELS_FOLDER)
-DATASET_FOLDER := $(DATA_FOLDER)/datasets
-TINY_IMAGENET_FOLDER := $(DATA_FOLDER)/tiny-imagenet-200/train
-WEIGTHS_FOLDER := $(DATA_FOLDER)/weights
-LOSSES_DATA_FOLDER := $(DATA_FOLDER)/losses
-LR_DATA_FOLDER := $(DATA_FOLDER)/learning_rates
+RAW_DATA_FOLDER := $(DATA_FOLDER)/$(DATASET_NAME)
+ifeq ($(DATASET_NAME), tinyimagenet)
+	RAW_DATA_FOLDER := $(RAW_DATA_FOLDER)/train
+endif
+DATASET_FOLDER := $(DATA_FOLDER)/datasets/$(DATASET_NAME)
+
+WEIGTHS_FOLDER := $(DATA_FOLDER)/weights/$(DATASET_NAME)
+LOSSES_DATA_FOLDER := $(DATA_FOLDER)/losses/$(DATASET_NAME)
+LR_DATA_FOLDER := $(DATA_FOLDER)/learning_rates/$(DATASET_NAME)
 TESTS_FOLDER := $(SRC_FOLDER)/tests
 
+DATASET_CREATION_CODE_PATH := $(PREPROCESSING_FOLDER)/create_dataset_$(DATASET_NAME).py
 TRAIN_PATH := $(DATASET_FOLDER)/train/dataset_$(N_TRAIN)_$(N_CLASSES)_$(MASK_PERCENTAGE).pth
 TEST_PATH := $(DATASET_FOLDER)/test/dataset_$(N_TEST)_$(N_CLASSES)_$(MASK_PERCENTAGE).pth
 LOSS_DATA_PATH := $(LOSSES_DATA_FOLDER)/$(MODEL_NAME)_$(MODEL_IDENTIFIER).csv
@@ -87,14 +95,20 @@ CONFIG_FILE_PARAMS := $(SRC_FOLDER)/params.json
 .DEFAULT:
 	@echo "Invalid target. Please run 'make help' for more information."
 
-.PHONY: config preprocess train test
+.PHONY: config preprocess train test help
 
 config:
-	@echo '{"tiny_imagenet_folder": "$(TINY_IMAGENET_FOLDER)", "train_path": "$(TRAIN_PATH)", "test_path": "$(TEST_PATH)", "weights_path": "$(WEIGTHS_PATH)", "loss_figure_path": "$(LOSS_FIGURE_PATH)", "loss_data_path": "$(LOSS_DATA_PATH)", "learning_rates_path": "$(LR_DATA_PATH)"}' > $(CONFIG_FILE_PATHS)
+	@echo '{"raw_data_folder": "$(RAW_DATA_FOLDER)", "dataset_path": "$(DATASET_FOLDER)", "weights_path": "$(WEIGTHS_PATH)", "loss_figure_path": "$(LOSS_FIGURE_PATH)", "loss_data_path": "$(LOSS_DATA_PATH)", "learning_rates_path": "$(LR_DATA_PATH)"' > $(CONFIG_FILE_PATHS)
+ifeq ($(DATASET_NAME), tinyimagenet)
+	@echo ', "train_path": "$(TRAIN_PATH)", "test_path": "$(TEST_PATH)"' >> $(CONFIG_FILE_PATHS)
+endif
+	@echo '}' >> $(CONFIG_FILE_PATHS)
+
+
 	@echo '{"model_name": "$(MODEL_NAME)", "n_train": "$(N_TRAIN)", "n_test": "$(N_TEST)", "n_classes": "$(N_CLASSES)", "image_width": "$(IMAGES_WIDTH)", "image_height": "$(IMAGES_HEIGHT)", "n_channels": "$(N_CHANNELS)", "mask_percentage": "$(MASK_PERCENTAGE)", "batch_size": "$(BATCH_SIZE)", "epochs": "$(EPOCHS)", "learning_rate": "$(LEARNING_RATE)", "scheduler": "$(LR_SCHEDULER)", "sched_step": "$(STEP_SIZE)", "sched_gamma": "$(GAMMA)", "initialize": "$(INITIALIZE)"' > $(CONFIG_FILE_PARAMS)
 
 ifeq ($(MODEL_NAME), transformer)
-	@echo ', "patch_size": "$(PATCH_SIZE)", "embedding_dim": "$(EMBEDDING_DIM)", "num_heads": "$(NUM_HEADS)", "`": "$(NUM_LAYERS)"' >> $(CONFIG_FILE_PARAMS)
+	@echo ', "patch_size": "$(PATCH_SIZE)", "embedding_dim": "$(EMBEDDING_DIM)", "num_heads": "$(NUM_HEADS)", "num_layers": "$(NUM_LAYERS)"' >> $(CONFIG_FILE_PARAMS)
 else
 	@echo ', "middle_layers": "$(MIDDLE_LAYERS)", "kernel_sizes": "$(KERNEL_SIZES)", "strides": "$(STRIDES)", "paddings": "$(PADDINGS)", "output_paddings": "$(OUTPUT_PADDINGS)"' >> $(CONFIG_FILE_PARAMS)
 endif
@@ -102,8 +116,8 @@ endif
 	@echo '}' >> $(CONFIG_FILE_PARAMS)
 
 preprocess : config
-	@echo "Creating train dataset..."
-	$(PYTHON) $(PREPROCESSING_FOLDER)/create_dataset.py --paths $(CONFIG_FILE_PATHS) --params $(CONFIG_FILE_PARAMS)
+	@echo "\nCreating train dataset with $(DATASET_CREATION_CODE_PATH) code..."
+	$(PYTHON) $(DATASET_CREATION_CODE_PATH) --paths $(CONFIG_FILE_PATHS) --params $(CONFIG_FILE_PARAMS)
 
 train: config
 	@echo "Training the model..."
@@ -112,3 +126,11 @@ train: config
 test: config
 	@echo "Running test..."
 	PYTHONPATH=$(PYTHONPATH) pytest
+
+help:
+	@echo "Makefile targets:"
+	@echo "  config      - Generate configuration files"
+	@echo "  preprocess  - Preprocess the dataset"
+	@echo "  train       - Train the model"
+	@echo "  test        - Run tests"
+	@echo "  help        - Display this help message"
