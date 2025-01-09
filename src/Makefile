@@ -1,6 +1,6 @@
-N_TRAIN := 10000
-N_TEST := 4000
-N_CLASSES := 40
+N_TRAIN := 80
+N_TEST := 20
+N_CLASSES := 1
 MASK_PERCENTAGE := 5
 BATCH_SIZE := 64
 EPOCHS := 10
@@ -22,9 +22,9 @@ DATASET_NAME := tinyimagenet
 ifeq ($(MODEL_NAME), simple_conv)
 	MIDDLE_LAYERS := 64 128 256
 	KERNEL_SIZES := 3 3 3
-	STRIDES := 1 1 1
+	STRIDES := 2 2 2
 	PADDINGS := 1 1 1
-	OUTPUT_PADDINGS := 0 0 0
+	OUTPUT_PADDINGS := 1 1 1
 else ifeq ($(MODEL_NAME), conv_unet)
 	MIDDLE_LAYERS := 64 128 256
 	KERNEL_SIZES := 3 3 3
@@ -74,20 +74,25 @@ ifeq ($(DATASET_NAME), tinyimagenet)
 	RAW_DATA_FOLDER := $(RAW_DATA_FOLDER)/train
 endif
 DATASET_FOLDER := $(DATA_FOLDER)/datasets/$(DATASET_NAME)
+FIGURES_FOLDER := $(BASE_DIR)/figs/$(DATASET_NAME)
 
-WEIGTHS_FOLDER := $(DATA_FOLDER)/weights/$(DATASET_NAME)
+WEIGHTS_FOLDER := $(DATA_FOLDER)/weights/$(DATASET_NAME)
+RESULTS_FOLDER := $(DATA_FOLDER)/results/$(DATASET_NAME)
 LOSSES_DATA_FOLDER := $(DATA_FOLDER)/losses/$(DATASET_NAME)
-LR_DATA_FOLDER := $(DATA_FOLDER)/learning_rates/$(DATASET_NAME)
 TESTS_FOLDER := $(SRC_FOLDER)/tests
+RESULTS_PLOT_FOLDER := $(FIGURES_FOLDER)/results
+
 
 DATASET_CREATION_CODE_PATH := $(PREPROCESSING_FOLDER)/create_dataset_$(DATASET_NAME).py
+TRAIN_CODE_PATH := $(SRC_FOLDER)/train.py
+
 TRAIN_PATH := $(DATASET_FOLDER)/train/dataset_$(N_TRAIN)_$(N_CLASSES)_$(MASK_PERCENTAGE).pth
 TEST_PATH := $(DATASET_FOLDER)/test/dataset_$(N_TEST)_$(N_CLASSES)_$(MASK_PERCENTAGE).pth
 LOSS_DATA_PATH := $(LOSSES_DATA_FOLDER)/$(MODEL_NAME)_$(MODEL_IDENTIFIER).csv
 LR_DATA_PATH := $(LR_DATA_FOLDER)/$(MODEL_NAME)_$(MODEL_IDENTIFIER).csv
-TRAIN_CODE_PATH := $(SRC_FOLDER)/train.py
-WEIGTHS_PATH := $(WEIGTHS_FOLDER)/$(MODEL_NAME)_$(MODEL_IDENTIFIER).pth
-LOSS_FIGURE_PATH := $(LOSSES_FOLDER)/$(MODEL_NAME)_$(MODEL_IDENTIFIER).png
+RESULTS_PLOT_PATH := $(RESULTS_PLOT_FOLDER)/$(MODEL_NAME)_$(MODEL_IDENTIFIER).png
+RESULTS_PATH := $(RESULTS_FOLDER)/$(MODEL_NAME)_$(MODEL_IDENTIFIER).json
+WEIGHTS_PATH := $(WEIGHTS_FOLDER)/$(MODEL_NAME)_$(MODEL_IDENTIFIER).pth
 CONFIG_FILE_PATHS := $(SRC_FOLDER)/paths.json
 CONFIG_FILE_PARAMS := $(SRC_FOLDER)/params.json
 
@@ -98,7 +103,7 @@ CONFIG_FILE_PARAMS := $(SRC_FOLDER)/params.json
 .PHONY: config preprocess train test help
 
 config:
-	@echo '{"raw_data_folder": "$(RAW_DATA_FOLDER)", "dataset_path": "$(DATASET_FOLDER)", "weights_path": "$(WEIGTHS_PATH)", "loss_figure_path": "$(LOSS_FIGURE_PATH)", "loss_data_path": "$(LOSS_DATA_PATH)", "learning_rates_path": "$(LR_DATA_PATH)"' > $(CONFIG_FILE_PATHS)
+	@echo '{"raw_data_folder": "$(RAW_DATA_FOLDER)", "dataset_path": "$(DATASET_FOLDER)", "weights_path": "$(WEIGHTS_PATH)", "loss_figure_path": "$(LOSS_FIGURE_PATH)", "results_path": "$(RESULTS_PATH)", "results_plot_path": "$(RESULTS_PLOT_PATH)"' > $(CONFIG_FILE_PATHS)
 ifeq ($(DATASET_NAME), tinyimagenet)
 	@echo ', "train_path": "$(TRAIN_PATH)", "test_path": "$(TEST_PATH)"' >> $(CONFIG_FILE_PATHS)
 endif
@@ -122,6 +127,14 @@ preprocess : config
 train: config
 	@echo "Training the model..."
 	$(PYTHON) $(TRAIN_CODE_PATH) --paths $(CONFIG_FILE_PATHS) --params $(CONFIG_FILE_PARAMS)
+
+plot: config
+	@echo "Plotting the results..."
+	$(PYTHON) $(SRC_FOLDER)/plot_results.py --paths $(CONFIG_FILE_PATHS) --params $(CONFIG_FILE_PARAMS)
+
+optimize: config
+	@echo "Optimizing the model..."
+	$(PYTHON) $(SRC_FOLDER)/hyperparameter_optimization.py --paths $(CONFIG_FILE_PATHS) --params $(CONFIG_FILE_PARAMS)
 
 test: config
 	@echo "Running test..."
