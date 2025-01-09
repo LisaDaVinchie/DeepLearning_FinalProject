@@ -24,6 +24,13 @@ paths_config_path = args.paths
 
 with open(paths_config_path, "r") as f:
     config = json.load(f)
+    
+useful_keys = ["train_path", "test_path", "weights_path", "loss_figure_path", "loss_data_path", "learning_rates_path"]
+
+for key in useful_keys:
+    if key not in config:
+        print(f"The key {key} was not found in the paths config file.")
+        exit()
 
 train_dataset_path = Path(config["train_path"])
 test_dataset_path = Path(config["test_path"])
@@ -35,8 +42,15 @@ learning_rates_path = Path(config["learning_rates_path"])
 params_config_path = args.params
 with open(params_config_path, "r") as f:
     config = json.load(f)
+    
+useful_keys = ["model_name", "n_train", "n_test", "n_channels", "batch_size", "learning_rate", "epochs", "scheduler", "initialize", "sched_step", "sched_gamma", "image_width"]
 
-model_name = config["model_name"]
+for key in useful_keys:
+    if key not in config:
+        print(f"The key {key} was not found in the parameters config file.")
+        exit()
+
+model_name = str(config["model_name"])
 n_train = int(config["n_train"])
 n_test = int(config["n_test"])
 n_channels = int(config["n_channels"])
@@ -50,11 +64,16 @@ sched_gamma = bool(config["sched_gamma"])
 image_size = int(config["image_width"])
 
 if model_name == "simple_conv":
-    middle_channels = [int(x) for x in config["middle_layers"]]
-    kernel_sizes = int(config["kernel_sizes"])
-    strides = int(config["strides"])
-    paddings = int(config["paddings"])
-    output_paddings = int(config["output_paddings"])
+    useful_keys = ["middle_layers", "kernel_sizes", "strides", "paddings", "output_paddings"]
+    for key in useful_keys:
+        if key not in config:
+            print(f"The key {key} was not found in the parameters config file.")
+            exit()
+    middle_channels = [int(x) for x in config["middle_layers"].split(" ")]
+    kernel_sizes = [int(x) for x in config["kernel_sizes"].split(" ")]
+    strides = [int(x) for x in config["strides"].split(" ")]
+    paddings = [int(x) for x in config["paddings"].split(" ")]
+    output_paddings = [int(x) for x in config["output_paddings"].split(" ")]
     model = autoencoder.simple_conv(in_channels=n_channels,
                                     middle_channels=middle_channels,
                                     kernel_sizes=kernel_sizes,
@@ -62,20 +81,35 @@ if model_name == "simple_conv":
                                     paddings=paddings,
                                     output_paddings=output_paddings)
 elif model_name == "conv_maxpool":
-    middle_channels = [int(x) for x in config["middle_layers"]]
+    useful_keys = ["middle_layers"]
+    for key in useful_keys:
+        if key not in config:
+            print(f"The key {key} was not found in the parameters config file.")
+            exit()
+    middle_channels = [int(x) for x in config["middle_layers"].split(" ")]
     model = autoencoder.conv_maxpool(in_channels=n_channels,
                                      middle_channels=middle_channels)
 elif model_name == "conv_unet":
-    middle_channels = [int(x) for x in config["middle_layers"]]
-    kernel_sizes = int(config["kernel_sizes"])
-    strides = int(config["strides"])
-    paddings = int(config["paddings"])
-    output_paddings = int(config["output_paddings"])
+    useful_keys = ["middle_layers", "kernel_sizes", "strides", "paddings", "output_paddings"]
+    for key in useful_keys:
+        if key not in config:
+            print(f"The key {key} was not found in the parameters config file.")
+            exit()
+    middle_channels = [int(x) for x in config["middle_layers"].split(" ")]
+    kernel_sizes = [int(x) for x in config["kernel_sizes"].split(" ")]
+    strides = [int(x) for x in config["strides"].split(" ")]
+    paddings = [int(x) for x in config["paddings"].split(" ")]
+    output_paddings = [int(x) for x in config["output_paddings"].split(" ")]
     model = autoencoder.conv_unet(in_channels=n_channels,
                                   middle_channels=middle_channels,
                                   kernel_sizes=kernel_sizes,
                                   strides=strides)
 elif model_name == "transformer":
+    useful_keys = ["patch_size", "embedding_dim", "num_heads", "num_layers"]
+    for key in useful_keys:
+        if key not in config:
+            print(f"The key {key} was not found in the parameters config file.")
+            exit()
     patch_size = int(config["patch_size"])
     embedding_dim = int(config["embedding_dim"])
     num_heads = int(config["num_heads"])
