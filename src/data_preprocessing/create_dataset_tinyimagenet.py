@@ -17,16 +17,30 @@ args = parser.parse_args()
 paths_file_path = args.paths
 params_file_path = args.params
 
-assert paths_file_path.exists(), f"Paths file {paths_file_path} does not exist."
-assert params_file_path.exists(), f"Parameters file {params_file_path} does not exist."
+if not paths_file_path.exists():
+    exit(f"Paths file {paths_file_path} does not exist.")
+if not params_file_path.exists():
+    exit(f"Parameters file {params_file_path} does not exist.")
 
 with open (paths_file_path, "r") as f:
     paths = json.load(f)
 
 with open (params_file_path, "r") as f:
     params = json.load(f)
+    
+useful_keys = ["raw_data_folder", "train_path", "test_path"]
 
-original_images_folder = Path(paths["tiny_imagenet_folder"])
+for key in useful_keys:
+    if key not in paths:
+        sys.exit(f"The key {key} was not found in the paths config file.")
+    
+useful_keys = ["n_train", "n_test", "n_classes", "mask_percentage", "image_width", "image_height"]
+
+for key in useful_keys:
+    if key not in params:
+        sys.exit(f"The key {key} was not found in the parameters config file.")
+
+original_images_folder = Path(paths["raw_data_folder"])
 train_path = Path(paths["train_path"])
 test_path = Path(paths["test_path"])
 n_train = int(params["n_train"])
@@ -59,7 +73,7 @@ if len(folder_list) <= 0:
     sys.exit("The train images folder is empty.")
     
 if n_classes > len(folder_list):
-    sys.exit(f"The train images folder contains {len(folder_list)} classes. The number of classes should be less than or equal to the number of classes in the train images folder.")
+    sys.exit(f"The train images folder {original_images_folder} contains {len(folder_list)} classes. The number of classes should be less than or equal to the number of classes in the train images folder.")
 
 if n_train % n_classes != 0:
     sys.exit(f"The number of train images {n_train} is not divisible by the number of classes {n_classes}.")
