@@ -1,16 +1,16 @@
-import matplotlib.pyplot as plt
 from pathlib import Path
 from torch.utils.data import DataLoader
 import torch as th
 import torch.nn as nn
 import torch.optim as optim
-from tqdm.auto import trange
 import time
 import json
 import argparse
+
 from models.ImageDataset import CustomImageDataset
 from models.transformer import TransformerInpainting
 import models.autoencoder as autoencoder
+from models.metrics import calculate_psnr, calculate_ssim
 from get_workers_number import get_available_cpus
 print("Imported all libraries")
 
@@ -24,20 +24,26 @@ paths_config_path = args.paths
 
 with open(paths_config_path, "r") as f:
     config = json.load(f)
-    
-useful_keys = ["train_path", "test_path", "weights_path", "loss_figure_path", "loss_data_path", "learning_rates_path"]
-
-for key in useful_keys:
-    if key not in config:
-        print(f"The key {key} was not found in the paths config file.")
-        exit()
 
 train_dataset_path = Path(config["train_path"])
 test_dataset_path = Path(config["test_path"])
 weights_path = Path(config["weights_path"])
-losses_figure_path = Path(config["loss_figure_path"])
-loss_data_path = Path(config["loss_data_path"])
-learning_rates_path = Path(config["learning_rates_path"])
+results_path = Path(config["results_path"])
+
+if not train_dataset_path.exists():
+    print(f"Path {train_dataset_path} does not exist")
+    exit()
+    
+if not test_dataset_path.exists():
+    print(f"Path {test_dataset_path} does not exist")
+    exit()
+
+print("Saving model")
+if not weights_path.parent.exists():
+    weights_path.parent.mkdir(exist_ok=True, parents=True)
+
+if not results_path.parent.exists():
+    results_path.parent.mkdir(parents=True, exist_ok=True)
 
 params_config_path = args.params
 with open(params_config_path, "r") as f:
@@ -76,10 +82,10 @@ if model_name == "simple_conv":
     output_paddings = [int(x) for x in config["output_paddings"].split(" ")]
     model = autoencoder.simple_conv(in_channels=n_channels,
                                     middle_channels=middle_channels,
-                                    kernel_sizes=kernel_sizes,
-                                    strides=strides,
-                                    paddings=paddings,
-                                    output_paddings=output_paddings)
+                                    kernel_size=kernel_sizes,
+                                    stride=strides,
+                                    padding=paddings,
+                                    output_padding=output_paddings)
 elif model_name == "conv_maxpool":
     useful_keys = ["middle_layers"]
     for key in useful_keys:
@@ -123,14 +129,6 @@ else:
     print("Invalid model name")
     exit()
 
-if not train_dataset_path.exists():
-    print(f"Path {train_dataset_path} does not exist")
-    exit()
-    
-if not test_dataset_path.exists():
-    print(f"Path {test_dataset_path} does not exist")
-    exit()
-
 print("Loading datasets")
 
 train_dataset = th.load(train_dataset_path)
@@ -171,71 +169,80 @@ if device == th.device("cpu"):
 print("Starting training")
 start_time = time.time()
 train_losses = []
+train_psnr = []
+train_ssim = []
+
 test_losses = []
+test_psnr = []
+test_ssim = []
+
 learning_rates = []
 
-def get_loss(model, device, criterion, image, mask):
+def get_metrics(model: th.nn.Module, device: th.device, criterion: th.nn.Module, image: th.tensor, mask: th.tensor) -> tuple:
     image.to(device)
     mask.to(device)
     output = model(image, mask)
     loss = criterion(output * mask, image * mask) / mask.sum()
-    return loss
+    psnr = calculate_psnr(image * mask, output * mask)
+    ssim = calculate_ssim(image * mask, output * mask)
+    return loss, psnr, ssim
 
-for epoch in trange(epochs):
+print("\n\n")
+for epoch in range(epochs):
+    print("Training epoch", epoch)
     model.train()
     batch_loss = 0.0
+    batch_psnr = 0.0
+    batch_ssim = 0.0
     for batch in train_loader:
         image, mask = batch
-        loss = get_loss(model, device, criterion, image, mask)
+        loss, psnr, ssim = get_metrics(model, device, criterion, image, mask)
         batch_loss += loss.item()
+        batch_psnr += psnr.item()
+        batch_ssim += ssim.item()
         optimizer.zero_grad()
         loss.backward()
         optimizer.step()
     
     # Divide the loss by the number of batches
     train_losses.append(batch_loss / len(train_loader.dataset))
+    train_psnr.append(batch_psnr / len(train_loader.dataset))
+    train_ssim.append(batch_ssim / len(train_loader.dataset))
     
     model.eval()
     with th.no_grad():
         batch_loss = 0.0
+        batch_psnr = 0.0
+        batch_ssim = 0.0
         for batch in test_loader:
             image, mask = batch
-            loss = get_loss(model, device, criterion, image, mask)
+            loss, psnr, ssim = get_metrics(model, device, criterion, image, mask)
             batch_loss += loss.detach().item()
+            batch_psnr += psnr.detach().item()
+            batch_ssim += ssim.detach().item()
         test_losses.append(batch_loss / len(test_loader.dataset))
+        test_psnr.append(batch_psnr / len(test_loader.dataset))
+        test_ssim.append(batch_ssim / len(test_loader.dataset))
         
     if scheduler is not None:
         learning_rates.append(scheduler.get_last_lr()[0])
         scheduler.step()
+    print(f"Epoch {epoch} finished\n")
         
 print(f"Training finished in {time.time() - start_time} seconds")
 
-loss_data = th.stack([th.tensor(train_losses), th.tensor(test_losses)], dim=1).tolist()
+metrics_data = {
+    "train_loss": train_losses,
+    "test_loss": test_losses,
+    "learning_rate": learning_rates,
+    "train_psnr": train_psnr,
+    "train_ssim": train_ssim,
+    "test_psnr": test_psnr,
+    "test_ssim": test_ssim
+}
 
-if not loss_data_path.parent.exists():
-    loss_data_path.parent.mkdir(parents=True, exist_ok=True)
-th.save(loss_data, loss_data_path)
+with open(results_path, "w") as f:
+    json.dump(metrics_data, f)
     
-if scheduler is not None:
-    if not learning_rates_path.parent.exists():
-        learning_rates_path.parent.mkdir(parents=True, exist_ok=True)
-    th.save(learning_rates, learning_rates_path)
-
-print("Saving model")
-if not weights_path.parent.exists():
-    weights_path.parent.mkdir(exist_ok=True, parents=True)
 th.save(model.state_dict(), weights_path)
 print("Model saved")
-
-print("Saving training loss plot")
-if not losses_figure_path.parent.exists():
-    losses_figure_path.parent.mkdir(parents=True, exist_ok=True)
-
-plt.figure()
-plt.plot(train_losses, label="Train")
-plt.plot(test_losses, label="Test")
-plt.legend()
-plt.xlabel("Epoch")
-plt.ylabel("Loss")
-plt.title("Training Loss")
-plt.savefig(losses_figure_path)
