@@ -5,6 +5,10 @@
 
 src/hyperparameter_optimization.py
 
+# Logs files
+src/logs
+src/logs/*
+
 # Python cache
 **__pycache__
 *.log
