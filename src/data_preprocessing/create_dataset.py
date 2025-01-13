@@ -100,15 +100,11 @@ def extract_image_info(image_list: list, rgb: bool = True):
             print(f"Error opening image {image}: {e}")
             continue
         tensor_image = transforms.ToTensor()(img)
-        # if not rgb:
-        #     tensor_image = RGB_to_BW(tensor_image)
-        #     print(tensor_image.shape)
         
         mask = th.tensor(mask_class.create_mask()).unsqueeze(0)
         
         if rgb:
             mask = mask.repeat(3, 1, 1)
-        # print(mask.shape)
         
         tensor_list[i] = tensor_image
         mask_list[i] = mask
