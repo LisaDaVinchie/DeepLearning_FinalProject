@@ -4,7 +4,8 @@ from torchvision import transforms
 import random
 import torch as th
 import sys
-from dataset_masking.masks import SquareMask
+from utils.masks import SquareMask, LineMask
+from utils.rgb_to_bw import RGB_to_BW
 import json
 import argparse
 
@@ -27,18 +28,6 @@ with open (paths_file_path, "r") as f:
 
 with open (params_file_path, "r") as f:
     params = json.load(f)
-    
-useful_keys = ["raw_data_folder", "train_path", "test_path"]
-
-for key in useful_keys:
-    if key not in paths:
-        sys.exit(f"The key {key} was not found in the paths config file.")
-    
-useful_keys = ["n_train", "n_test", "n_classes", "mask_percentage", "image_width", "image_height"]
-
-for key in useful_keys:
-    if key not in params:
-        sys.exit(f"The key {key} was not found in the parameters config file.")
 
 original_images_folder = Path(paths["raw_data_folder"])
 train_path = Path(paths["train_path"])
@@ -47,17 +36,17 @@ n_train = int(params["n_train"])
 n_test = int(params["n_test"])
 n_classes = int(params["n_classes"])
 mask_percentage = int(params["mask_percentage"])
+rgb = str(params["rgb"])
+rgb = rgb.lower() == "true"
 image_width = int(params["image_width"])
 image_height = int(params["image_height"])
+images_extension = str(paths["image_extension"])
 
 if not original_images_folder.exists():
     sys.exit("The original images folder does not exist.")
 
 # Declare the path to the train images inner folder
 image_subpath = "images"
-
-# Declare images extension
-images_extension: str = ".JPEG"
 
 # Declare the dataset extension
 dataset_extension: str = ".pth"
@@ -84,26 +73,42 @@ if n_test % n_classes != 0:
 train_images_per_class: int = n_train // n_classes
 test_images_per_class: int = n_test // n_classes
 
+images_per_class_in_dataset = len(list(Path(folder_list[0]/image_subpath).glob(f"*{images_extension}")))
+
+if images_per_class_in_dataset <= 0:
+    sys.exit(f"The train images folder {folder_list[0]} is empty.")
 # Check if the train images folder contains enough images to create the dataset
-if train_images_per_class + test_images_per_class > len(list(folder_list[0].glob(f"{image_subpath}/*{images_extension}"))):
+if train_images_per_class + test_images_per_class > images_per_class_in_dataset:
     sys.exit(f"The train images folder does not contain enough images to create the dataset with {n_train} train images and {n_test} test images.")
 
 # Create the SquareMask object
 mask_class = SquareMask(image_width, image_height, n_pixels)
-print("Mask class created with the following parameters:", image_width, image_height, n_pixels)
+print("Mask class created with the following parameters:", image_width, image_height, n_pixels, "\n")
 
-def extract_image_info(image_list: list):
+def extract_image_info(image_list: list, rgb: bool = True):
     tensor_list = [None] * len(image_list)
     mask_list = [None] * len(image_list)
     
+    if rgb:
+        mode = "RGB"
+    else:
+        mode = "L"
+    
     for i, image in enumerate(image_list):
         try:
-            img = Image.open(image).convert("RGB")
+            img = Image.open(image).convert(mode)
         except Exception as e:
             print(f"Error opening image {image}: {e}")
             continue
         tensor_image = transforms.ToTensor()(img)
-        mask = th.tensor(mask_class.create_square_mask()).unsqueeze(0).repeat(3, 1, 1)
+        # if not rgb:
+        #     tensor_image = RGB_to_BW(tensor_image)
+        #     print(tensor_image.shape)
+        
+        mask = th.tensor(mask_class.create_mask()).unsqueeze(0)
+        
+        if rgb:
+            mask = mask.repeat(3, 1, 1)
         # print(mask.shape)
         
         tensor_list[i] = tensor_image
@@ -111,7 +116,7 @@ def extract_image_info(image_list: list):
     return tensor_list, mask_list
 
 # Iterate over the train images class folders
-print(f"Creating the dataset with:\n{n_train} train images\n{n_test} test images\n{n_classes} classes\n{mask_percentage}% mask")
+print(f"Creating the dataset with:\n{n_train} train images\n{n_test} test images\n{n_classes} classes\n{mask_percentage}% mask\nrgb={rgb}\n")
 
 # Declare the lists to store the images, labels and masks
 train_images_list = [None] * n_train
@@ -144,18 +149,19 @@ for folder in random.sample(folder_list, n_classes):
     test_images = [img for img in images if img not in train_images]
             
     # Iterate over the train images
-    train_images_list[i:i + train_images_per_class], train_masks_list[i:i + train_images_per_class] = extract_image_info(train_images)
+    train_images_list[i:i + train_images_per_class], train_masks_list[i:i + train_images_per_class] = extract_image_info(train_images, rgb)
     
     train_labels_list[i:i + train_images_per_class] = [label] * train_images_per_class
     i += train_images_per_class
     
     # Iterate over the test images
-    test_images_list[j:j + test_images_per_class], test_masks_list[j:j + test_images_per_class] = extract_image_info(test_images)
+    test_images_list[j:j + test_images_per_class], test_masks_list[j:j + test_images_per_class] = extract_image_info(test_images, rgb)
     
     test_labels_list[j:j + test_images_per_class] = [label] * test_images_per_class
     j += test_images_per_class
     
 print("Lists created.")
+print("Images shape:", train_images_list[0].shape)
         
 train_data = {"images": train_images_list,
               "masks": train_masks_list,
