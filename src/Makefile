@@ -1,13 +1,14 @@
-N_TRAIN := 80
-N_TEST := 20
-N_CLASSES := 1
+N_TRAIN := 2000
+N_TEST := 900
+N_CLASSES := 10
 MASK_PERCENTAGE := 5
+RGB := False
 BATCH_SIZE := 64
 EPOCHS := 10
 LEARNING_RATE := 0.001
 IMAGES_WIDTH := 64
 IMAGES_HEIGHT := 64
-N_CHANNELS := 3
+N_CHANNELS := 1
 INITIALIZE := True
 LR_SCHEDULER := True
 STEP_SIZE := 1
@@ -16,7 +17,7 @@ GAMMA := LEARNING_RATE / EPOCHS
 # simple_conv, conv_unet, conv_maxpool, transformer
 MODEL_NAME := conv_maxpool
 
-# cifar10, tinyimagenet
+# cifar10, tinyimagenet, groceries
 DATASET_NAME := tinyimagenet
 
 ifeq ($(MODEL_NAME), simple_conv)
@@ -73,6 +74,7 @@ RAW_DATA_FOLDER := $(DATA_FOLDER)/$(DATASET_NAME)
 ifeq ($(DATASET_NAME), tinyimagenet)
 	RAW_DATA_FOLDER := $(RAW_DATA_FOLDER)/train
 endif
+
 DATASET_FOLDER := $(DATA_FOLDER)/datasets/$(DATASET_NAME)
 FIGURES_FOLDER := $(BASE_DIR)/figs/$(DATASET_NAME)
 
@@ -83,11 +85,21 @@ TESTS_FOLDER := $(SRC_FOLDER)/tests
 RESULTS_PLOT_FOLDER := $(FIGURES_FOLDER)/results
 
 
-DATASET_CREATION_CODE_PATH := $(PREPROCESSING_FOLDER)/create_dataset_$(DATASET_NAME).py
+DATASET_CREATION_CODE_PATH := $(PREPROCESSING_FOLDER)/create_dataset.py
 TRAIN_CODE_PATH := $(SRC_FOLDER)/train.py
 
-TRAIN_PATH := $(DATASET_FOLDER)/train/dataset_$(N_TRAIN)_$(N_CLASSES)_$(MASK_PERCENTAGE).pth
-TEST_PATH := $(DATASET_FOLDER)/test/dataset_$(N_TEST)_$(N_CLASSES)_$(MASK_PERCENTAGE).pth
+TRAIN_PATH := $(DATASET_FOLDER)/train/dataset_$(N_TRAIN)_$(N_CLASSES)_$(MASK_PERCENTAGE)
+TEST_PATH := $(DATASET_FOLDER)/test/dataset_$(N_TEST)_$(N_CLASSES)_$(MASK_PERCENTAGE)
+ifeq ($(RGB), True)
+	TRAIN_PATH := $(TRAIN_PATH)_rgb.pth
+	TEST_PATH := $(TEST_PATH)_rgb.pth
+	N_CHANNELS := 3
+else
+	TRAIN_PATH := $(TRAIN_PATH).pth
+	TEST_PATH := $(TEST_PATH).pth
+endif
+
+
 LOSS_DATA_PATH := $(LOSSES_DATA_FOLDER)/$(MODEL_NAME)_$(MODEL_IDENTIFIER).csv
 LR_DATA_PATH := $(LR_DATA_FOLDER)/$(MODEL_NAME)_$(MODEL_IDENTIFIER).csv
 RESULTS_PLOT_PATH := $(RESULTS_PLOT_FOLDER)/$(MODEL_NAME)_$(MODEL_IDENTIFIER).png
@@ -105,12 +117,14 @@ CONFIG_FILE_PARAMS := $(SRC_FOLDER)/params.json
 config:
 	@echo '{"raw_data_folder": "$(RAW_DATA_FOLDER)", "dataset_path": "$(DATASET_FOLDER)", "weights_path": "$(WEIGHTS_PATH)", "loss_figure_path": "$(LOSS_FIGURE_PATH)", "results_path": "$(RESULTS_PATH)", "results_plot_path": "$(RESULTS_PLOT_PATH)"' > $(CONFIG_FILE_PATHS)
 ifeq ($(DATASET_NAME), tinyimagenet)
-	@echo ', "train_path": "$(TRAIN_PATH)", "test_path": "$(TEST_PATH)"' >> $(CONFIG_FILE_PATHS)
+	@echo ', "train_path": "$(TRAIN_PATH)", "test_path": "$(TEST_PATH)", "image_extension": ".JPEG"' >> $(CONFIG_FILE_PATHS)
+else ifeq ($(DATASET_NAME), groceries)
+	@echo ', "train_path": "$(TRAIN_PATH)", "test_path": "$(TEST_PATH)", "image_extension": ".png"' >> $(CONFIG_FILE_PATHS)
 endif
 	@echo '}' >> $(CONFIG_FILE_PATHS)
 
 
-	@echo '{"model_name": "$(MODEL_NAME)", "n_train": "$(N_TRAIN)", "n_test": "$(N_TEST)", "n_classes": "$(N_CLASSES)", "image_width": "$(IMAGES_WIDTH)", "image_height": "$(IMAGES_HEIGHT)", "n_channels": "$(N_CHANNELS)", "mask_percentage": "$(MASK_PERCENTAGE)", "batch_size": "$(BATCH_SIZE)", "epochs": "$(EPOCHS)", "learning_rate": "$(LEARNING_RATE)", "scheduler": "$(LR_SCHEDULER)", "sched_step": "$(STEP_SIZE)", "sched_gamma": "$(GAMMA)", "initialize": "$(INITIALIZE)"' > $(CONFIG_FILE_PARAMS)
+	@echo '{"model_name": "$(MODEL_NAME)", "n_train": "$(N_TRAIN)", "n_test": "$(N_TEST)", "n_classes": "$(N_CLASSES)", "image_width": "$(IMAGES_WIDTH)", "image_height": "$(IMAGES_HEIGHT)", "n_channels": "$(N_CHANNELS)", "mask_percentage": "$(MASK_PERCENTAGE)", "rgb": "$(RGB)", "batch_size": "$(BATCH_SIZE)", "epochs": "$(EPOCHS)", "learning_rate": "$(LEARNING_RATE)", "scheduler": "$(LR_SCHEDULER)", "sched_step": "$(STEP_SIZE)", "sched_gamma": "$(GAMMA)", "initialize": "$(INITIALIZE)"' > $(CONFIG_FILE_PARAMS)
 
 ifeq ($(MODEL_NAME), transformer)
 	@echo ', "patch_size": "$(PATCH_SIZE)", "embedding_dim": "$(EMBEDDING_DIM)", "num_heads": "$(NUM_HEADS)", "num_layers": "$(NUM_LAYERS)"' >> $(CONFIG_FILE_PARAMS)
