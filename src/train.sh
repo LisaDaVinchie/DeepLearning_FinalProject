@@ -10,9 +10,8 @@
 set -e
 
 if [ -z "$VIRTUAL_ENV" ]; then
-    source ../../DL_env/bin/activate || { echo "Failed to activate virtual environment"; exit 1; }
+    source ../venv/bin/activate || { echo "Failed to activate virtual environment"; exit 1; }
 fi
-
 
 make train || { echo "Training failed"; exit 1; }
 
