@@ -5,9 +5,11 @@
 
 src/hyperparameter_optimization.py
 
-# Logs files
+# Logs files folder
 src/logs
-src/logs/*
+
+# The virtual environment folder
+venv
 
 # Python cache
 **__pycache__
