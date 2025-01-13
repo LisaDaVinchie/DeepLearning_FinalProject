@@ -5,7 +5,6 @@ import random
 import torch as th
 import sys
 from utils.masks import SquareMask, LineMask
-from utils.rgb_to_bw import RGB_to_BW
 import json
 import argparse
 
