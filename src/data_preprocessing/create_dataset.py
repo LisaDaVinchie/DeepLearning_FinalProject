@@ -113,57 +113,57 @@ def extract_image_info(image_list: list, rgb: bool = True):
 # Iterate over the train images class folders
 print(f"Creating the dataset with:\n{n_train} train images\n{n_test} test images\n{n_classes} classes\n{mask_percentage}% mask\nrgb={rgb}\n")
 
-# Declare the lists to store the images, labels and masks
-train_images_list = [None] * n_train
-train_masks_list = [None] * n_train
-train_labels_list = [None] * n_train
+def create_dicts(folder_list, n_classes, n_train, n_test, train_images_per_class, test_images_per_class, rgb):
+    # Declare the lists to store the images, labels and masks
+    train_images_list = [None] * n_train
+    train_masks_list = [None] * n_train
+    train_labels_list = [None] * n_train
 
-test_images_list = [None] * n_test
-test_masks_list = [None] * n_test
-test_labels_list = [None] * n_test
+    test_images_list = [None] * n_test
+    test_masks_list = [None] * n_test
+    test_labels_list = [None] * n_test
 
-# Iterate over the train images class folders
-i: int = 0
-j: int = 0
-for folder in random.sample(folder_list, n_classes):
-    print(f"Processing class folder {folder.name}")
-    # Get a list of the images in the class folder
-    
-    images = list((folder / image_subpath).glob(f"*{images_extension}"))
-
-    if len(images) <= train_images_per_class + test_images_per_class:
-        print(f"The class folder {folder.name} does not contain enough images.")
-        continue
-    
-    # Get the label of the class folder
-    label = folder.name
-    
-    images = random.sample(images, train_images_per_class + test_images_per_class)
-    
-    train_images = random.sample(images, train_images_per_class)
-    test_images = [img for img in images if img not in train_images]
-            
-    # Iterate over the train images
-    train_images_list[i:i + train_images_per_class], train_masks_list[i:i + train_images_per_class] = extract_image_info(train_images, rgb)
-    
-    train_labels_list[i:i + train_images_per_class] = [label] * train_images_per_class
-    i += train_images_per_class
-    
-    # Iterate over the test images
-    test_images_list[j:j + test_images_per_class], test_masks_list[j:j + test_images_per_class] = extract_image_info(test_images, rgb)
-    
-    test_labels_list[j:j + test_images_per_class] = [label] * test_images_per_class
-    j += test_images_per_class
-    
-print("Lists created.")
-print("Images shape:", train_images_list[0].shape)
+    # Iterate over the train images class folders
+    i: int = 0
+    j: int = 0
+    for folder in random.sample(folder_list, n_classes):
+        print(f"Processing class folder {folder.name}")
+        # Get a list of the images in the class folder
         
-train_data = {"images": train_images_list,
-              "masks": train_masks_list,
-              "labels": train_labels_list}
-test_data = {"images": test_images_list,
-             "masks": test_masks_list,
-             "labels": test_labels_list}
+        images = list(Path(folder / image_subpath).glob(f"*{images_extension}"))
+        
+        # Get the label of the class folder
+        label = folder.name
+        
+        images = random.sample(images, train_images_per_class + test_images_per_class)
+        
+        train_images = random.sample(images, train_images_per_class)
+        test_images = [img for img in images if img not in train_images]
+                
+        # Iterate over the train images
+        train_images_list[i:i + train_images_per_class], train_masks_list[i:i + train_images_per_class] = extract_image_info(train_images, rgb)
+        
+        train_labels_list[i:i + train_images_per_class] = [label] * train_images_per_class
+        i += train_images_per_class
+        
+        # Iterate over the test images
+        test_images_list[j:j + test_images_per_class], test_masks_list[j:j + test_images_per_class] = extract_image_info(test_images, rgb)
+        
+        test_labels_list[j:j + test_images_per_class] = [label] * test_images_per_class
+        j += test_images_per_class
+        
+    print("Lists created.")
+            
+    train_data = {"images": train_images_list,
+                "masks": train_masks_list,
+                "labels": train_labels_list}
+    test_data = {"images": test_images_list,
+                "masks": test_masks_list,
+                "labels": test_labels_list}
+    
+    return train_data, test_data
+
+train_data, test_data = create_dicts(folder_list, n_classes, n_train, n_test, train_images_per_class, test_images_per_class, rgb)
 
 for data in [train_data, test_data]:
     for key in data.keys():
