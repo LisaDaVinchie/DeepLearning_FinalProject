@@ -33,3 +33,6 @@ figs/*
 
 # Json files
 *.json
+
+# Sbatch files
+src/job.sh
