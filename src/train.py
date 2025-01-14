@@ -7,11 +7,12 @@ import time
 import json
 import argparse
 
+from utils.parameter_selection import filter_params, typecast_bool
 from models.ImageDataset import CustomImageDataset
 from models.transformer import TransformerInpainting
 import models.autoencoder as autoencoder
 from models.metrics import calculate_psnr, calculate_ssim
-from get_workers_number import get_available_cpus
+from utils.get_workers_number import get_available_cpus
 print("Imported all libraries")
 
 parser = argparse.ArgumentParser()
@@ -38,7 +39,6 @@ if not test_dataset_path.exists():
     print(f"Path {test_dataset_path} does not exist")
     exit()
 
-print("Saving model")
 if not weights_path.parent.exists():
     weights_path.parent.mkdir(exist_ok=True, parents=True)
 
@@ -49,78 +49,50 @@ params_config_path = args.params
 with open(params_config_path, "r") as f:
     config = json.load(f)
 
-model_name = str(config["model_name"])
 n_train = int(config["n_train"])
 n_test = int(config["n_test"])
-n_channels = int(config["n_channels"])
 batch_size = int(config["batch_size"])
 learning_rate = float(config["learning_rate"])
 epochs = int(config["epochs"])
-scheduler = bool(config["scheduler"])
-initialize = bool(config["initialize"])
+scheduler = typecast_bool(config["scheduler"])
+initialize = typecast_bool(config["initialize"])
 sched_step = int(config["sched_step"])
-sched_gamma = bool(config["sched_gamma"])
+sched_gamma = float(config["sched_gamma"])
 image_size = int(config["image_width"])
+rgb = typecast_bool(config["rgb"])
 
-if model_name == "simple_conv":
-    useful_keys = ["middle_layers", "kernel_sizes", "strides", "paddings", "output_paddings"]
-    for key in useful_keys:
-        if key not in config:
-            print(f"The key {key} was not found in the parameters config file.")
-            exit()
-    middle_channels = [int(x) for x in config["middle_layers"].split(" ")]
-    kernel_sizes = [int(x) for x in config["kernel_sizes"].split(" ")]
-    strides = [int(x) for x in config["strides"].split(" ")]
-    paddings = [int(x) for x in config["paddings"].split(" ")]
-    output_paddings = [int(x) for x in config["output_paddings"].split(" ")]
-    model = autoencoder.simple_conv(in_channels=n_channels,
-                                    middle_channels=middle_channels,
-                                    kernel_size=kernel_sizes,
-                                    stride=strides,
-                                    padding=paddings,
-                                    output_padding=output_paddings)
-elif model_name == "conv_maxpool":
-    useful_keys = ["middle_layers"]
-    for key in useful_keys:
-        if key not in config:
-            print(f"The key {key} was not found in the parameters config file.")
-            exit()
-    middle_channels = [int(x) for x in config["middle_layers"].split(" ")]
-    model = autoencoder.conv_maxpool(in_channels=n_channels,
-                                     middle_channels=middle_channels)
-elif model_name == "conv_unet":
-    useful_keys = ["middle_layers", "kernel_sizes", "strides", "paddings", "output_paddings"]
-    for key in useful_keys:
-        if key not in config:
-            print(f"The key {key} was not found in the parameters config file.")
-            exit()
-    middle_channels = [int(x) for x in config["middle_layers"].split(" ")]
-    kernel_sizes = [int(x) for x in config["kernel_sizes"].split(" ")]
-    strides = [int(x) for x in config["strides"].split(" ")]
-    paddings = [int(x) for x in config["paddings"].split(" ")]
-    output_paddings = [int(x) for x in config["output_paddings"].split(" ")]
-    model = autoencoder.conv_unet(in_channels=n_channels,
-                                  middle_channels=middle_channels,
-                                  kernel_sizes=kernel_sizes,
-                                  strides=strides)
-elif model_name == "transformer":
-    useful_keys = ["patch_size", "embedding_dim", "num_heads", "num_layers"]
-    for key in useful_keys:
-        if key not in config:
-            print(f"The key {key} was not found in the parameters config file.")
-            exit()
-    patch_size = int(config["patch_size"])
-    embedding_dim = int(config["embedding_dim"])
-    num_heads = int(config["num_heads"])
-    num_layers = int(config["num_layers"])
-    model = TransformerInpainting(img_size=image_size,
-                                  patch_size=patch_size,
-                                  embed_dim=embedding_dim,
-                                  num_heads=num_heads,
-                                  num_layers=num_layers)
+if rgb:
+    n_channels: int = 3
 else:
-    print("Invalid model name")
-    exit()
+    n_channels: int = 1
+
+model_name = config.get("model_name")
+model_params = config.get("model_configs", {}).get(model_name, {})
+
+# Mapping model names to classes
+MODEL_CLASSES = {
+    "conv_maxpool": autoencoder.conv_maxpool,
+    "transformer": TransformerInpainting,
+    "simple_conv": autoencoder.simple_conv,
+    "conv_unet": autoencoder.conv_unet
+}
+
+# Get the corresponding model class
+ModelClass = MODEL_CLASSES.get(model_name)
+
+if ModelClass is None:
+    raise ValueError(f"Model class for '{model_name}' not found.")
+
+print("Model class:", ModelClass)
+print("Model parameters:", model_params)
+
+filtered_params = filter_params(ModelClass, model_params)
+
+if not filtered_params:
+    raise ValueError("No valid parameters found for the model")
+
+print(f"Passing parameters n_channels={n_channels}, **filtered_params={filtered_params} to the model")
+model = ModelClass(n_channels, **filtered_params)
 
 print("Loading datasets")
 
