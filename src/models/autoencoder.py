@@ -2,6 +2,7 @@ import torch as th
 from torch import nn
 import torch.nn.functional as F
 from typing import List
+from mask_image import mask_image
 
 class simple_conv(nn.Module):
     def __init__(self, in_channels: int = 3, middle_channels: List[int] = [64, 128, 256], kernel_size: List[int] = [3, 3, 3], stride: List[int] = [2, 2, 2], padding: List[int] = [1, 1, 1], output_padding: List[int] = [1, 1, 1]):
@@ -26,7 +27,7 @@ class simple_conv(nn.Module):
         )
 
     def forward(self, image: th.tensor, mask: th.tensor):
-        masked_img = th.where(mask, th.tensor(2.0), image)
+        masked_img = mask_image(image, mask)
         encoded = self.encoder(masked_img)
         decoded = self.decoder(encoded)
         return decoded
@@ -47,7 +48,7 @@ class conv_unet(nn.Module):
         self.relu = nn.ReLU()
 
     def forward(self, image: th.tensor, mask: th.tensor):
-        masked_img = th.where(mask, th.tensor(2.0), image)
+        masked_img = mask_image(image, mask)
         enc1 = self.relu(self.encoder1(masked_img))
         enc2 = self.relu(self.encoder2(enc1))
         enc3 = self.relu(self.encoder3(enc2))
@@ -119,7 +120,7 @@ class conv_maxpool(nn.Module):
     
     def forward(self, image: th.tensor, mask: th.tensor) -> th.Tensor:
         
-        x = th.where(mask, th.tensor(2.0), image)
+        x = mask_image(image, mask)
         
         encodings = []
         
