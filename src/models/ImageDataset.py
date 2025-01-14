@@ -36,7 +36,7 @@ class CustomImageDataset(Dataset):
             tuple: A tuple containing the image, label and mask at the given index
         """
         image = th.tensor(self.data[idx], dtype=th.float32)
-        mask = th.tensor(self.masks[idx], dtype=th.float32)
+        mask = th.tensor(self.masks[idx], dtype=th.bool)
         
         return image, mask
     
