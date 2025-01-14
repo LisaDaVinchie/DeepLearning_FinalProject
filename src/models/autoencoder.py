@@ -2,7 +2,7 @@ import torch as th
 from torch import nn
 import torch.nn.functional as F
 from typing import List
-from mask_image import mask_image
+from models import mask_image
 
 class simple_conv(nn.Module):
     def __init__(self, in_channels: int = 3, middle_channels: List[int] = [64, 128, 256], kernel_size: List[int] = [3, 3, 3], stride: List[int] = [2, 2, 2], padding: List[int] = [1, 1, 1], output_padding: List[int] = [1, 1, 1]):
