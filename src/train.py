@@ -8,11 +8,11 @@ import json
 import argparse
 
 from utils.parameter_selection import filter_params, typecast_bool
+from utils.metrics import calculate_psnr, calculate_ssim
+from utils.get_workers_number import get_available_cpus
 from models.ImageDataset import CustomImageDataset
 from models.transformer import TransformerInpainting
 import models.autoencoder as autoencoder
-from models.metrics import calculate_psnr, calculate_ssim
-from utils.get_workers_number import get_available_cpus
 print("Imported all libraries")
 
 parser = argparse.ArgumentParser()
