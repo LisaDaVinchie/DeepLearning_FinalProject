@@ -48,13 +48,6 @@ if not results_path.parent.exists():
 params_config_path = args.params
 with open(params_config_path, "r") as f:
     config = json.load(f)
-    
-useful_keys = ["model_name", "n_train", "n_test", "n_channels", "batch_size", "learning_rate", "epochs", "scheduler", "initialize", "sched_step", "sched_gamma", "image_width"]
-
-for key in useful_keys:
-    if key not in config:
-        print(f"The key {key} was not found in the parameters config file.")
-        exit()
 
 model_name = str(config["model_name"])
 n_train = int(config["n_train"])
