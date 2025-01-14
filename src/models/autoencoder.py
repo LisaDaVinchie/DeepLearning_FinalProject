@@ -1,9 +1,10 @@
 import torch as th
 from torch import nn
 import torch.nn.functional as F
+from typing import List
 
 class simple_conv(nn.Module):
-    def __init__(self, in_channels=3, middle_channels= [64, 128, 256], kernel_size = [3, 3, 3], stride = [2, 2, 2], padding = [1, 1, 1], output_padding = [1, 1, 1]):
+    def __init__(self, in_channels: int = 3, middle_channels: List[int] = [64, 128, 256], kernel_size: List[int] = [3, 3, 3], stride: List[int] = [2, 2, 2], padding: List[int] = [1, 1, 1], output_padding: List[int] = [1, 1, 1]):
         super(simple_conv, self).__init__()
         # Encoder
         self.encoder = nn.Sequential(
@@ -31,7 +32,7 @@ class simple_conv(nn.Module):
         return decoded
 
 class conv_unet(nn.Module):
-    def __init__(self, in_channels=3, middle_channels= [64, 128, 256], kernel_size = [3, 3, 3], stride = [2, 2, 2]):
+    def __init__(self, in_channels: int = 3, middle_channels: List[int] = [64, 128, 256], kernel_size: List[int] = [3, 3, 3], stride: List[int] = [2, 2, 2]):
         super(conv_unet, self).__init__()
         padding = [kernel_size[0]//2, kernel_size[1]//2, kernel_size[2]//2]
         
@@ -58,7 +59,7 @@ class conv_unet(nn.Module):
         return dec3
 
 class conv_maxpool(nn.Module):
-    def __init__(self, in_channels: int, middle_channels: list, print_sizes: bool=False):
+    def __init__(self, in_channels: int, middle_channels: List[int], print_sizes: bool=False):
         super(conv_maxpool, self).__init__()
         assert len(middle_channels) == 5, "Middle channels must have 5 elements"
         for c in middle_channels:
