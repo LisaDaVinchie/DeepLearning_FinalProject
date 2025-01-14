@@ -12,6 +12,17 @@ class CustomImageDataset(Dataset):
         assert isinstance(dataset, dict), "The dataset should be a dictionary"
         assert "images" in dataset.keys(), "The dataset should have a key 'images'"
         assert "masks" in dataset.keys(), "The dataset should have a key 'masks'"
+        if not isinstance(dataset["images"], list):
+            raise AssertionError(f"Images should be a list but are of type {type(dataset['images'])}")
+        if not isinstance(dataset["masks"], list):
+            raise AssertionError(f"Masks should be a list but are of type {type(dataset['masks'])}")
+        
+        for i, image in enumerate(dataset["images"]):
+            if not isinstance(image, th.Tensor):
+                raise AssertionError(f"Image at index {i} is not a tensor but of type {type(image)}")
+        for i, mask in enumerate(dataset["masks"]):
+            if not isinstance(mask, th.Tensor):
+                raise AssertionError(f"Mask at index {i} is not a tensor but of type {type(mask)}")
         
         self.data = dataset["images"]
         self.masks = dataset["masks"]
@@ -35,8 +46,8 @@ class CustomImageDataset(Dataset):
         Returns:
             tuple: A tuple containing the image, label and mask at the given index
         """
-        image = th.tensor(self.data[idx], dtype=th.float32)
-        mask = th.tensor(self.masks[idx], dtype=th.bool)
+        image = self.data[idx]
+        mask = self.masks[idx]
         
         return image, mask
     
