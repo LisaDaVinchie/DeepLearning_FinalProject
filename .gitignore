@@ -29,10 +29,10 @@ venv
 
 # Datasets
 data/*
-figs/*
+!data/results
 
-# Json files
-*.json
+# Json files in src folder
+src/**.json
 
 # Sbatch files
 src/job.sh
