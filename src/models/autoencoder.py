@@ -59,7 +59,7 @@ class conv_unet(nn.Module):
         return dec3
 
 class conv_maxpool(nn.Module):
-    def __init__(self, in_channels: int, middle_channels: List[int], print_sizes: bool=False):
+    def __init__(self, in_channels: int, middle_channels: List[int], kernel_size: int = 3, stride: int = 1, pool_size: int = 2, up_kernel: int = 2, up_stride: int = 2, print_sizes: bool=False):
         super(conv_maxpool, self).__init__()
         assert len(middle_channels) == 5, "Middle channels must have 5 elements"
         for c in middle_channels:
@@ -68,11 +68,6 @@ class conv_maxpool(nn.Module):
         self.print_sizes = print_sizes
         
         # Parameters
-        kernel_size = 3
-        stride = 1
-        pool_size = 2
-        up_kernel = 2
-        up_stride = 2
         activation = nn.ReLU()
         
         # Define encoder
@@ -129,7 +124,7 @@ class conv_maxpool(nn.Module):
             encodings.append(x)
             x = pool(x)
             if self.print_sizes:
-                print(f"Encoder block: {x.shape}")
+                print(f"Encoder block: {x.shape}", flush=True)
         
         # Decoder
         for i, (deconv, upconv) in enumerate(zip(self.decoder_blocks, self.upconvs)):
@@ -137,11 +132,11 @@ class conv_maxpool(nn.Module):
             x = upconv(x)
             x = th.cat([x, encodings[-(i + 1)]], dim=1)
             if self.print_sizes:
-                print(f"Decoder block {i + 1}: {x.shape}")
+                print(f"Decoder block {i + 1}: {x.shape}", flush=True)
         
         # Output
         x = self.output_conv(x)
         if self.print_sizes:
-            print(f"Output: {x.shape}")
+            print(f"Output: {x.shape}", flush=True)
         
         return self.sigmoid(x)
