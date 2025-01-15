@@ -18,4 +18,13 @@ jobs:
 
       - name: Find files over 25MB
         run: |
-          find . -type f -size +25M -exec echo "Large file detected: {}" \; && exit 1 || echo "No large files found"
+          # Search for files larger than 25MB and print their paths
+          large_files=$(find . -type f -size +25M)
+          if [ -n "$large_files" ]; then
+            echo "Large file(s) detected:"
+            echo "$large_files"
+            exit 1
+          else
+            echo "No large files found"
+          fi
+
