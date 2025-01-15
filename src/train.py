@@ -114,18 +114,6 @@ train_set = CustomImageDataset(test_dataset)
 test_loader = DataLoader(train_set, batch_size=batch_size, shuffle=False, pin_memory=True)
 print("Test dataLoader created", flush=True)
 
-#### CHECKPOINT ####
-
-for image, mask in train_loader:
-    print(f"Image shape: {image.shape}, mask shape: {mask.shape}")
-    break
-
-for image, mask in test_loader:
-    print(f"Image shape: {image.shape}, mask shape: {mask.shape}")
-    break
-
-#### CHECKPOINT END ####
-
 device = th.device("cuda" if th.cuda.is_available() else "cpu")
 print(f"Using device: {device}", flush=True)
 model = model.to(device)
