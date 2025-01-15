@@ -31,6 +31,7 @@ venv
 data/datasets/*
 data/tinyimagenet*
 data/*.zip
+data/weights/*
 
 # Json files in src folder
 src/**.json
