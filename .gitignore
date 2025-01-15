@@ -28,10 +28,9 @@ venv
 **/.ipynb_checkpoints
 
 # Datasets
-data/datasets/*
-data/tinyimagenet*
+data/*/
 data/*.zip
-data/weights/*
+!data/results/
 
 # Json files in src folder
 src/**.json
