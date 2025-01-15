@@ -10,6 +10,7 @@ import argparse
 from utils.parameter_selection import filter_params, typecast_bool
 from utils.metrics import calculate_psnr, calculate_ssim
 from utils.get_workers_number import get_available_cpus
+from utils.to_black_and_white import dataset_to_black_and_white
 from models.ImageDataset import CustomImageDataset
 from models.transformer import TransformerInpainting
 import models.autoencoder as autoencoder
@@ -95,18 +96,35 @@ model = ModelClass(n_channels, **filtered_params)
 
 print("Loading datasets", flush=True)
 
+print("Loading datasets", flush=True)
 train_dataset = th.load(train_dataset_path)
+test_dataset = th.load(test_dataset_path)
+print("Datasets loaded", flush=True)
+
+if not rgb:
+    train_dataset = dataset_to_black_and_white(train_dataset)
+    test_dataset = dataset_to_black_and_white(test_dataset)
+    print("Converted datasets to black and white", flush=True)
+
 print("Train dataset loaded", flush=True)
 test_set = CustomImageDataset(train_dataset)
 train_loader = DataLoader(test_set, batch_size=batch_size, shuffle=True, pin_memory=True)
-print("Train dataLoader created", flush=True)
-    
 
-test_dataset = th.load(test_dataset_path)
-print("Test dataset loaded", flush=True)
 train_set = CustomImageDataset(test_dataset)
 test_loader = DataLoader(train_set, batch_size=batch_size, shuffle=False, pin_memory=True)
 print("Test dataLoader created", flush=True)
+
+#### CHECKPOINT ####
+
+for image, mask in train_loader:
+    print(f"Image shape: {image.shape}, mask shape: {mask.shape}")
+    break
+
+for image, mask in test_loader:
+    print(f"Image shape: {image.shape}, mask shape: {mask.shape}")
+    break
+
+#### CHECKPOINT END ####
 
 device = th.device("cuda" if th.cuda.is_available() else "cpu")
 print(f"Using device: {device}", flush=True)

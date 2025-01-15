@@ -8,7 +8,7 @@ def img_to_black_and_white(image: th.tensor, weights: list = None) -> th.tensor:
     if weights is None:
         weights = th.tensor([0.2989, 0.5870, 0.1140], dtype=th.float32)
 
-    return th.tensordot(weights, image, dims=1)
+    return th.tensordot(weights, image, dims=1).unsqueeze(0)
 
 def dataset_to_black_and_white(dataset: dict):
     bw_dataset = dataset.copy()
