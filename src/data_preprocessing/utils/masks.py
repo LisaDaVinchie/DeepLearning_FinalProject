@@ -2,10 +2,10 @@ import numpy as np
 import cv2
 
 class SquareMask:
-    def __init__(self, image_width: int, image_height: int, n_pixels: int):
-        self.n_pixels = n_pixels
+    def __init__(self, image_width: int, image_height: int, mask_percentage: int):
         self.image_width = image_width
         self.image_height = image_height
+        n_pixels = int((mask_percentage / 100) * image_width * image_height)
         square_width = int(np.sqrt(n_pixels))
         self.half_square_width = square_width // 2
         
@@ -35,11 +35,11 @@ class SquareMask:
         return mask
 
 class LineMask:
-    def __init__(self, n_channels: int, image_width: int, image_height: int, max_tichkness: int = 3, n_lines: int = 5):
+    def __init__(self, n_channels: int, image_width: int, image_height: int, max_thickness: int = 3, n_lines: int = 5):
         self.n_channels = n_channels
         self.image_width = image_width
         self.image_height = image_height
-        self.max_tichkness = max_tichkness
+        self.max_tichkness = max_thickness
         self.n_lines = n_lines
 
     def create_mask(self) -> np.ndarray:
