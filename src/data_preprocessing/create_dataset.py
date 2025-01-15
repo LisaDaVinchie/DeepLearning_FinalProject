@@ -14,7 +14,7 @@ from utils.masks import SquareMask, LineMask
 # Add the parent directory to sys.path
 parent_folder = Path(__file__).resolve().parent.parent.parent
 
-print(f"\nAdding {str(parent_folder)} to sys.path\n")
+print(f"\nAdding {str(parent_folder)} to sys.path\n", flush=True)
 sys.path.append(str(parent_folder))
 
 # Import your module or function
@@ -93,7 +93,7 @@ if train_images_per_class + test_images_per_class > images_per_class_in_dataset:
 
 # Create the SquareMask object
 mask_class = SquareMask(image_width, image_height, n_pixels)
-print("Mask class created with the following parameters:", image_width, image_height, n_pixels, "\n")
+print("Mask class created with the following parameters:", image_width, image_height, n_pixels, "\n", flush=True)
 
 def extract_image_info(image_list: list, rgb: bool = True):
     tensor_list = [None] * len(image_list)
@@ -108,7 +108,7 @@ def extract_image_info(image_list: list, rgb: bool = True):
         try:
             img = Image.open(image).convert(mode)
         except Exception as e:
-            print(f"Error opening image {image}: {e}")
+            print(f"Error opening image {image}: {e}", flush=True)
             continue
         tensor_image = transforms.ToTensor()(img)
         
@@ -122,7 +122,7 @@ def extract_image_info(image_list: list, rgb: bool = True):
     return tensor_list, mask_list
 
 # Iterate over the train images class folders
-print(f"Creating the dataset with:\n{n_train} train images\n{n_test} test images\n{n_classes} classes\n{mask_percentage}% mask\nrgb={rgb}\n")
+print(f"Creating the dataset with:\n{n_train} train images\n{n_test} test images\n{n_classes} classes\n{mask_percentage}% mask\nrgb={rgb}\n", flush=True)
 
 def create_dicts(folder_list, n_classes, n_train, n_test, train_images_per_class, test_images_per_class, rgb):
     # Declare the lists to store the images, labels and masks
@@ -138,7 +138,7 @@ def create_dicts(folder_list, n_classes, n_train, n_test, train_images_per_class
     i: int = 0
     j: int = 0
     for folder in random.sample(folder_list, n_classes):
-        print(f"Processing class folder {folder.name}")
+        print(f"Processing class folder {folder.name}", flush=True)
         # Get a list of the images in the class folder
         
         images = list(Path(folder / image_subpath).glob(f"*{images_extension}"))
@@ -163,7 +163,7 @@ def create_dicts(folder_list, n_classes, n_train, n_test, train_images_per_class
         test_labels_list[j:j + test_images_per_class] = [label] * test_images_per_class
         j += test_images_per_class
         
-    print("Lists created.")
+    print("Lists created.", flush=True)
             
     train_data = {"images": train_images_list,
                 "masks": train_masks_list,
@@ -179,17 +179,17 @@ train_data, test_data = create_dicts(folder_list, n_classes, n_train, n_test, tr
 for data in [train_data, test_data]:
     for key in data.keys():
         if any([x is None for x in data[key]]):
-            print(f"Error in the {key} list: list not filled completely.")
+            print(f"Error in the {key} list: list not filled completely.", flush=True)
             exit()
 
-print("Datasets created.")
+print("Datasets created.", flush=True)
 
 # Save the dataset
-print("Saving the datasets.")
+print("Saving the datasets.", flush=True)
 train_path.parent.mkdir(parents=True, exist_ok=True)
 th.save(train_data, train_path)
-print(f"Train dataset saved in {train_path}.")
+print(f"Train dataset saved in {train_path}.", flush=True)
 
 test_path.parent.mkdir(parents=True, exist_ok=True)
 th.save(test_data, test_path)
-print(f"Test dataset saved in {test_path}.")
+print(f"Test dataset saved in {test_path}.", flush=True)
