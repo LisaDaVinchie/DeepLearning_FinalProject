@@ -32,6 +32,9 @@ ifeq ($(INITIALIZE), True)
 	MODEL_IDENTIFIER := $(MODEL_IDENTIFIER)_initialized
 endif
 
+ifeq ($(RGB), True)
+	MODEL_IDENTIFIER := $(MODEL_IDENTIFIER)_rgb
+
 DATA_FOLDER := $(BASE_DIR)/data
 FIGURES_FOLDER := $(BASE_DIR)/figs
 LOSSES_FOLDER := $(FIGURES_FOLDER)/losses
@@ -92,7 +95,7 @@ train: config
 
 plot: config
 	@echo "Plotting the results..."
-	$(PYTHON) $(SRC_FOLDER)/plot_results.py --paths $(CONFIG_FILE_PATHS) --params $(CONFIG_FILE_PARAMS)
+	$(PYTHON) $(SRC_FOLDER)/plot_results.py --results_folder $(RESULTS_FOLDER) --figs_folder $(RESULTS_PLOT_FOLDER)
 
 optimize: config
 	@echo "Optimizing the model..."
