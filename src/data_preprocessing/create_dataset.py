@@ -101,7 +101,7 @@ if train_images_per_class + test_images_per_class > images_per_class_in_dataset:
     sys.exit(f"The train images folder does not contain enough images to create the dataset with {n_train} train images and {n_test} test images.")
 
 # Create the SquareMask object
-mask_class = MaskClass(image_width, image_height, mask_percentage, **filtered_params)
+mask_class = MaskClass(image_width, image_height, **filtered_params)
 print("Mask class created with the following parameters:", flush=True)
 
 def extract_image_info(image_list: list):
