@@ -33,17 +33,16 @@ class simple_conv(nn.Module):
         return decoded
 
 class conv_unet(nn.Module):
-    def __init__(self, in_channels: int = 3, middle_channels: List[int] = [64, 128, 256], kernel_size: List[int] = [3, 3, 3], stride: List[int] = [2, 2, 2]):
+    def __init__(self, in_channels: int = 3, middle_channels: List[int] = [64, 128, 256], kernel_size: List[int] = [3, 3, 3], stride: List[int] = [2, 2, 2], padding: List[int] = [1, 1, 1], output_padding: List[int] = [1, 1, 1]):
         super(conv_unet, self).__init__()
-        padding = [kernel_size[0]//2, kernel_size[1]//2, kernel_size[2]//2]
         
         self.encoder1 = nn.Conv2d(in_channels, middle_channels[0], kernel_size=kernel_size[0], stride=stride[0], padding=padding[0])  # 64x64 -> 32x32
         self.encoder2 = nn.Conv2d(middle_channels[0], middle_channels[1], kernel_size=kernel_size[1], stride=stride[1], padding= padding[1])  # 32x32 -> 16x16
         self.encoder3 = nn.Conv2d(middle_channels[1], middle_channels[2], kernel_size=kernel_size[2], stride=stride[2], padding=padding[2])  # 16x16 -> 8x8
         
-        self.decoder1 = nn.ConvTranspose2d(middle_channels[2], middle_channels[1], kernel_size=kernel_size[2], stride=stride[2], padding=padding[0], output_padding=1)  # 8x8 -> 16x16
-        self.decoder2 = nn.ConvTranspose2d(middle_channels[1], middle_channels[0], kernel_size=kernel_size[1], stride=stride[1], padding=padding[1], output_padding=1)
-        self.decoder3 = nn.ConvTranspose2d(middle_channels[0], in_channels, kernel_size=kernel_size[0], stride=stride[0], padding=padding[2], output_padding=1)
+        self.decoder1 = nn.ConvTranspose2d(middle_channels[2], middle_channels[1], kernel_size=kernel_size[2], stride=stride[2], padding=padding[0], output_padding=output_padding[0])  # 8x8 -> 16x16
+        self.decoder2 = nn.ConvTranspose2d(middle_channels[1], middle_channels[0], kernel_size=kernel_size[1], stride=stride[1], padding=padding[1], output_padding=output_padding[1])
+        self.decoder3 = nn.ConvTranspose2d(middle_channels[0], in_channels, kernel_size=kernel_size[0], stride=stride[0], padding=padding[2], output_padding=output_padding[2])
         
         self.relu = nn.ReLU()
 
