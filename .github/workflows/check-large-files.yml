@@ -1,0 +1,21 @@
+name: Check for Large Files
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  check-large-files:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Find files over 25MB
+        run: |
+          find . -type f -size +25M -exec echo "Large file detected: {}" \; && exit 1 || echo "No large files found"
