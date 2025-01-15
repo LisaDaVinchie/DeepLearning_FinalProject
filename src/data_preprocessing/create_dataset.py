@@ -10,6 +10,11 @@ import sys
 from pathlib import Path
 from utils.masks import SquareMask, LineMask
 
+parent_folder = Path(__file__).resolve().parents[2]
+print(f"Parent folder: {parent_folder}", flush=True)
+sys.path.append(str(parent_folder))
+from src.utils.parameter_selection import filter_params
+
 parser = argparse.ArgumentParser()
 parser.add_argument("--paths", type=Path, required=True, help="Path to the paths config file")
 parser.add_argument("--params", type=Path, required=True, help="Path to the parameters config file")
@@ -40,6 +45,8 @@ mask_percentage = int(params["mask_percentage"])
 image_width = int(params["image_width"])
 image_height = int(params["image_height"])
 images_extension = str(paths["image_extension"])
+mask_type = params.get("mask_name")
+mask_params = params.get("masks_configs", {}).get(mask_type, {})
 
 if not original_images_folder.exists():
     sys.exit("The original images folder does not exist.")
@@ -50,9 +57,22 @@ image_subpath = "images"
 # Declare the dataset extension
 dataset_extension: str = ".pth"
 
-# Declare the image width and height and calculate the number of pixels in the square mask
+MASK_CLASSES = {
+    "square": SquareMask,
+    "lines": LineMask
+}
 
-n_pixels = int((mask_percentage / 100) * image_width * image_height)
+MaskClass = MASK_CLASSES.get(mask_type)
+
+if MaskClass is None:
+    sys.exit(f"Mask type {mask_type} not recognized.")
+
+filtered_params = filter_params(MaskClass, mask_params, ["self", "n_channels", "image_width", "image_height"])
+
+if len(filtered_params) <= 0:
+    sys.exit(f"No parameters found for mask class {MaskClass}.")
+
+print(f"Using mask class {MaskClass} with parameters {filtered_params}", flush=True)
 
 # Get a list of the train images class folders
 folder_list = [f for f in original_images_folder.iterdir() if f.is_dir()]
@@ -81,8 +101,8 @@ if train_images_per_class + test_images_per_class > images_per_class_in_dataset:
     sys.exit(f"The train images folder does not contain enough images to create the dataset with {n_train} train images and {n_test} test images.")
 
 # Create the SquareMask object
-mask_class = SquareMask(image_width, image_height, n_pixels)
-print("Mask class created with the following parameters:", image_width, image_height, n_pixels, "\n", flush=True)
+mask_class = MaskClass(image_width, image_height, mask_percentage, **filtered_params)
+print("Mask class created with the following parameters:", flush=True)
 
 def extract_image_info(image_list: list):
     tensor_list = [None] * len(image_list)
