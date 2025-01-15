@@ -8,17 +8,7 @@ import json
 import argparse
 import sys
 from pathlib import Path
-
 from utils.masks import SquareMask, LineMask
-
-# Add the parent directory to sys.path
-parent_folder = Path(__file__).resolve().parent.parent.parent
-
-print(f"\nAdding {str(parent_folder)} to sys.path\n", flush=True)
-sys.path.append(str(parent_folder))
-
-# Import your module or function
-from src.utils import parameter_selection as ps
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--paths", type=Path, required=True, help="Path to the paths config file")
@@ -47,7 +37,6 @@ n_train = int(params["n_train"])
 n_test = int(params["n_test"])
 n_classes = int(params["n_classes"])
 mask_percentage = int(params["mask_percentage"])
-rgb = ps.typecast_bool(str(params["rgb"]))
 image_width = int(params["image_width"])
 image_height = int(params["image_height"])
 images_extension = str(paths["image_extension"])
@@ -95,14 +84,11 @@ if train_images_per_class + test_images_per_class > images_per_class_in_dataset:
 mask_class = SquareMask(image_width, image_height, n_pixels)
 print("Mask class created with the following parameters:", image_width, image_height, n_pixels, "\n", flush=True)
 
-def extract_image_info(image_list: list, rgb: bool = True):
+def extract_image_info(image_list: list):
     tensor_list = [None] * len(image_list)
     mask_list = [None] * len(image_list)
     
-    if rgb:
-        mode = "RGB"
-    else:
-        mode = "L"
+    mode = "RGB"
     
     for i, image in enumerate(image_list):
         try:
@@ -113,18 +99,16 @@ def extract_image_info(image_list: list, rgb: bool = True):
         tensor_image = transforms.ToTensor()(img)
         
         mask = th.tensor(mask_class.create_mask()).unsqueeze(0)
-        
-        if rgb:
-            mask = mask.repeat(3, 1, 1)
+        mask = mask.repeat(3, 1, 1)
         
         tensor_list[i] = tensor_image
         mask_list[i] = mask
     return tensor_list, mask_list
 
 # Iterate over the train images class folders
-print(f"Creating the dataset with:\n{n_train} train images\n{n_test} test images\n{n_classes} classes\n{mask_percentage}% mask\nrgb={rgb}\n", flush=True)
+print(f"Creating the dataset with:\n{n_train} train images\n{n_test} test images\n{n_classes} classes\n{mask_percentage}% mask\n", flush=True)
 
-def create_dicts(folder_list, n_classes, n_train, n_test, train_images_per_class, test_images_per_class, rgb):
+def create_dicts(folder_list, n_classes, n_train, n_test, train_images_per_class, test_images_per_class):
     # Declare the lists to store the images, labels and masks
     train_images_list = [None] * n_train
     train_masks_list = [None] * n_train
@@ -152,13 +136,13 @@ def create_dicts(folder_list, n_classes, n_train, n_test, train_images_per_class
         test_images = [img for img in images if img not in train_images]
                 
         # Iterate over the train images
-        train_images_list[i:i + train_images_per_class], train_masks_list[i:i + train_images_per_class] = extract_image_info(train_images, rgb)
+        train_images_list[i:i + train_images_per_class], train_masks_list[i:i + train_images_per_class] = extract_image_info(train_images)
         
         train_labels_list[i:i + train_images_per_class] = [label] * train_images_per_class
         i += train_images_per_class
         
         # Iterate over the test images
-        test_images_list[j:j + test_images_per_class], test_masks_list[j:j + test_images_per_class] = extract_image_info(test_images, rgb)
+        test_images_list[j:j + test_images_per_class], test_masks_list[j:j + test_images_per_class] = extract_image_info(test_images)
         
         test_labels_list[j:j + test_images_per_class] = [label] * test_images_per_class
         j += test_images_per_class
@@ -174,7 +158,7 @@ def create_dicts(folder_list, n_classes, n_train, n_test, train_images_per_class
     
     return train_data, test_data
 
-train_data, test_data = create_dicts(folder_list, n_classes, n_train, n_test, train_images_per_class, test_images_per_class, rgb)
+train_data, test_data = create_dicts(folder_list, n_classes, n_train, n_test, train_images_per_class, test_images_per_class)
 
 for data in [train_data, test_data]:
     for key in data.keys():
