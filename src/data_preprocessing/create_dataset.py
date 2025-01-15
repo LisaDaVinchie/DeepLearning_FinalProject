@@ -5,6 +5,7 @@ import random
 import torch as th
 import sys
 from utils.masks import SquareMask, LineMask
+from src import parameter_selection as ps
 import json
 import argparse
 
@@ -35,8 +36,7 @@ n_train = int(params["n_train"])
 n_test = int(params["n_test"])
 n_classes = int(params["n_classes"])
 mask_percentage = int(params["mask_percentage"])
-rgb = str(params["rgb"])
-rgb = rgb.lower() == "true"
+rgb = ps.typecast_bool(str(params["rgb"]))
 image_width = int(params["image_width"])
 image_height = int(params["image_height"])
 images_extension = str(paths["image_extension"])
