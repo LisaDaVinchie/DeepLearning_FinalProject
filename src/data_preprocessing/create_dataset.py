@@ -4,10 +4,21 @@ from torchvision import transforms
 import random
 import torch as th
 import sys
-from utils.masks import SquareMask, LineMask
-from src import parameter_selection as ps
 import json
 import argparse
+import sys
+from pathlib import Path
+
+from utils.masks import SquareMask, LineMask
+
+# Add the parent directory to sys.path
+parent_folder = Path(__file__).resolve().parent.parent.parent
+
+print(f"\nAdding {str(parent_folder)} to sys.path\n")
+sys.path.append(str(parent_folder))
+
+# Import your module or function
+from src.utils import parameter_selection as ps
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--paths", type=Path, required=True, help="Path to the paths config file")
