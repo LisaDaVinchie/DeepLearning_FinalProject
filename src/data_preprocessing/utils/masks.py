@@ -35,8 +35,7 @@ class SquareMask:
         return mask
 
 class LineMask:
-    def __init__(self, n_channels: int, image_width: int, image_height: int, max_thickness: int = 3, n_lines: int = 5):
-        self.n_channels = n_channels
+    def __init__(self, image_width: int, image_height: int, max_thickness: int = 3, n_lines: int = 5):
         self.image_width = image_width
         self.image_height = image_height
         self.max_tichkness = max_thickness
