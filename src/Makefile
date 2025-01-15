@@ -34,6 +34,7 @@ endif
 
 ifeq ($(RGB), True)
 	MODEL_IDENTIFIER := $(MODEL_IDENTIFIER)_rgb
+endif
 
 DATA_FOLDER := $(BASE_DIR)/data
 FIGURES_FOLDER := $(BASE_DIR)/figs
