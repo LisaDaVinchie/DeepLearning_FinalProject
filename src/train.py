@@ -13,7 +13,7 @@ from utils.get_workers_number import get_available_cpus
 from models.ImageDataset import CustomImageDataset
 from models.transformer import TransformerInpainting
 import models.autoencoder as autoencoder
-print("Imported all libraries")
+print("Imported all libraries", flush=True)
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--paths", type=Path, required=True, help="Path to the paths config file")
@@ -32,11 +32,11 @@ weights_path = Path(config["weights_path"])
 results_path = Path(config["results_path"])
 
 if not train_dataset_path.exists():
-    print(f"Path {train_dataset_path} does not exist")
+    print(f"Path {train_dataset_path} does not exist", flush=True)
     exit()
     
 if not test_dataset_path.exists():
-    print(f"Path {test_dataset_path} does not exist")
+    print(f"Path {test_dataset_path} does not exist", flush=True)
     exit()
 
 if not weights_path.parent.exists():
@@ -81,36 +81,35 @@ MODEL_CLASSES = {
 ModelClass = MODEL_CLASSES.get(model_name)
 
 if ModelClass is None:
-    raise ValueError(f"Model class for '{model_name}' not found.")
+    raise ValueError(f"Model class for '{model_name}' not found.", flush=True)
 
-print("Model class:", ModelClass)
-print("Model parameters:", model_params)
+print(f"Model class {ModelClass} with parameters {model_params}", flush=True)
 
 filtered_params = filter_params(ModelClass, model_params)
 
 if not filtered_params:
-    raise ValueError("No valid parameters found for the model")
+    raise ValueError("No valid parameters found for the model", flush=True)
 
-print(f"Passing parameters n_channels={n_channels}, **filtered_params={filtered_params} to the model")
+print(f"Passing parameters n_channels={n_channels}, **filtered_params={filtered_params} to the model", flush=True)
 model = ModelClass(n_channels, **filtered_params)
 
-print("Loading datasets")
+print("Loading datasets", flush=True)
 
 train_dataset = th.load(train_dataset_path)
-print("Train dataset loaded")
+print("Train dataset loaded", flush=True)
 test_set = CustomImageDataset(train_dataset)
 train_loader = DataLoader(test_set, batch_size=batch_size, shuffle=True, pin_memory=True)
-print("Train dataLoader created")
+print("Train dataLoader created", flush=True)
     
 
 test_dataset = th.load(test_dataset_path)
-print("Test dataset loaded")
+print("Test dataset loaded", flush=True)
 train_set = CustomImageDataset(test_dataset)
 test_loader = DataLoader(train_set, batch_size=batch_size, shuffle=False, pin_memory=True)
-print("Test dataLoader created")
+print("Test dataLoader created", flush=True)
 
 device = th.device("cuda" if th.cuda.is_available() else "cpu")
-print(f"Using device: {device}")
+print(f"Using device: {device}", flush=True)
 model = model.to(device)
 optimizer = optim.Adam(model.parameters(), lr=learning_rate)
 if scheduler:
@@ -131,7 +130,7 @@ if device == th.device("cpu"):
     n_workers = get_available_cpus()
     th.set_num_threads(n_workers)
     
-print("Starting training")
+print("Starting training", flush=True)
 start_time = time.time()
 train_losses = []
 train_psnr = []
@@ -152,9 +151,9 @@ def get_metrics(model: th.nn.Module, device: th.device, criterion: th.nn.Module,
     ssim = calculate_ssim(image * mask, output * mask)
     return loss, psnr, ssim
 
-print("\n\n")
+print("\n\n", flush=True)
 for epoch in range(epochs):
-    print("Training epoch", epoch)
+    print("Training epoch", epoch, flush=True)
     model.train()
     batch_loss = 0.0
     batch_psnr = 0.0
@@ -192,9 +191,9 @@ for epoch in range(epochs):
     if scheduler is not None:
         learning_rates.append(scheduler.get_last_lr()[0])
         scheduler.step()
-    print(f"Epoch {epoch} finished\n")
+    print(f"Epoch {epoch} finished\n", flush=True)
         
-print(f"Training finished in {time.time() - start_time} seconds")
+print(f"Training finished in {time.time() - start_time} seconds", flush=True)
 
 metrics_data = {
     "train_loss": train_losses,
@@ -210,4 +209,4 @@ with open(results_path, "w") as f:
     json.dump(metrics_data, f)
     
 th.save(model.state_dict(), weights_path)
-print("Model saved")
+print("Model saved", flush=True)
