@@ -208,8 +208,20 @@ metrics_data = {
     "train_psnr": train_psnr,
     "train_ssim": train_ssim,
     "test_psnr": test_psnr,
-    "test_ssim": test_ssim
+    "test_ssim": test_ssim,
+    "model_name": model_name,
+    "model_params": model_params
 }
+
+# Check if results_path already exists and modify the path if necessary
+if results_path.exists():
+    base = results_path.stem
+    suffix = results_path.suffix
+    parent = results_path.parent
+    counter = 1
+    while results_path.exists():
+        results_path = parent / f"{base}_{counter}{suffix}"
+        counter += 1
 
 with open(results_path, "w") as f:
     json.dump(metrics_data, f)
