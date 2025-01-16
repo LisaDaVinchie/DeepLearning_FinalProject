@@ -119,7 +119,7 @@ print(f"Using device: {device}", flush=True)
 model = model.to(device)
 optimizer = optim.Adam(model.parameters(), lr=learning_rate)
 if scheduler:
-    scheduler = th.optim.lr_scheduler.StepLR(optimizer, step_size=sched_step, gamma=sched_gamma)
+    scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=sched_step, gamma=sched_gamma)
 else:
     scheduler = None
     
