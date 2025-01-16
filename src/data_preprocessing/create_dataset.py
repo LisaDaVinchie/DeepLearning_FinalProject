@@ -11,9 +11,9 @@ from pathlib import Path
 from utils.masks import SquareMask, LineMask
 
 parent_folder = Path(__file__).resolve().parents[2]
-print(f"Parent folder: {parent_folder}", flush=True)
 sys.path.append(str(parent_folder))
-from src.utils.parameter_selection import filter_params, typecast_bool
+from src.utils.parameter_selection import filter_params
+from src.utils.load_config import load_params
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--paths", type=Path, required=True, help="Path to the paths config file")
@@ -32,22 +32,25 @@ if not params_file_path.exists():
 with open (paths_file_path, "r") as f:
     paths = json.load(f)
 
-with open (params_file_path, "r") as f:
-    params = json.load(f)
-
 original_images_folder = Path(paths["raw_data_folder"])
 train_path = Path(paths["train_path"])
 test_path = Path(paths["test_path"])
-n_train = int(params["n_train"])
-n_test = int(params["n_test"])
-n_classes = int(params["n_classes"])
-mask_percentage = int(params["mask_percentage"])
-image_width = int(params["image_width"])
-image_height = int(params["image_height"])
 images_extension = str(paths["image_extension"])
-mask_type = params.get("mask_name")
-mask_params = params.get("masks_configs", {}).get(mask_type, {})
-repeat_images = typecast_bool(params.get("repeat_images"))
+
+# Declaring dataset parameters
+mask_name = None
+n_classes = None
+n_train = None
+n_test = None
+repeat_images = None
+image_width = None
+image_height = None
+dataset_params = load_params(params_file_path, "dataset_params")
+locals().update(dataset_params)
+
+with open (params_file_path, "r") as f:
+    config = json.load(f)
+mask_params = config.get("masks_configs", {}).get(mask_name, {})
 
 if not original_images_folder.exists():
     sys.exit("The original images folder does not exist.")
@@ -63,10 +66,10 @@ MASK_CLASSES = {
     "lines": LineMask
 }
 
-MaskClass = MASK_CLASSES.get(mask_type)
+MaskClass = MASK_CLASSES.get(mask_name)
 
 if MaskClass is None:
-    sys.exit(f"Mask type {mask_type} not recognized.")
+    sys.exit(f"Mask type {mask_name} not recognized.")
 
 filtered_params = filter_params(MaskClass, mask_params, ["self", "n_channels", "image_width", "image_height"])
 
@@ -128,7 +131,7 @@ def extract_image_info(image_list: list):
     return tensor_list, mask_list
 
 # Iterate over the train images class folders
-print(f"Creating the dataset with:\n{n_train} train images\n{n_test} test images\n{n_classes} classes\n{mask_percentage}% mask\n", flush=True)
+print(f"Creating the dataset with:\n{n_train} train images\n{n_test} test images\n{n_classes}\n", flush=True)
 
 def create_dicts(folder_list: list, n_classes: int, n_train: int, n_test: int, train_images_per_class: int, test_images_per_class: int, repeat: bool):
     # Declare the lists to store the images, labels and masks
