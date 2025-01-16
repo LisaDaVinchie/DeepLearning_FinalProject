@@ -6,25 +6,25 @@ PYTHONPATH := $(SRC_FOLDER)
 PYTHON := $(shell which python3)
 
 CONFIG_FILE_PATHS := $(SRC_FOLDER)/paths.json
-CONFIG_FILE_PARAMS := $(SRC_FOLDER)/params.json
+CONFIG_FILE_PARAMS := $(SRC_FOLDER)/params1.json
 
-N_TRAIN := $(shell jq -r '.n_train' $(CONFIG_FILE_PARAMS))
-N_TEST := $(shell jq -r '.n_test' $(CONFIG_FILE_PARAMS))
-N_CLASSES := $(shell jq -r '.n_classes' $(CONFIG_FILE_PARAMS))
-MASK_PERCENTAGE := $(shell jq -r '.mask_percentage' $(CONFIG_FILE_PARAMS))
-RGB := $(shell jq -r '.rgb' $(CONFIG_FILE_PARAMS))
-BATCH_SIZE := $(shell jq -r '.batch_size' $(CONFIG_FILE_PARAMS))
-EPOCHS := $(shell jq -r '.epochs' $(CONFIG_FILE_PARAMS))
-LEARNING_RATE := $(shell jq -r '.learning_rate' $(CONFIG_FILE_PARAMS))
-N_CHANNELS := $(shell jq -r '.n_channels' $(CONFIG_FILE_PARAMS))
-INITIALIZE := $(shell jq -r '.initialize' $(CONFIG_FILE_PARAMS))
-LR_SCHEDULER := $(shell jq -r '.scheduler' $(CONFIG_FILE_PARAMS))
-MODEL_NAME := $(shell jq -r '.model_name' $(CONFIG_FILE_PARAMS))
-DATASET_NAME := $(shell jq -r '.dataset_name' $(CONFIG_FILE_PARAMS))
-MASK_TYPE := $(shell jq -r '.mask_name' $(CONFIG_FILE_PARAMS))
-REPEAT_IMAGES := $(shell jq -r '.repeat_images' $(CONFIG_FILE_PARAMS))
+N_TRAIN := $(shell jq -r '.dataset_params.n_train' $(CONFIG_FILE_PARAMS))
+N_TEST := $(shell jq -r '.dataset_params.n_test' $(CONFIG_FILE_PARAMS))
+N_CLASSES := $(shell jq -r '.dataset_params.n_classes' $(CONFIG_FILE_PARAMS))
+RGB := $(shell jq -r '.dataset_params.rgb' $(CONFIG_FILE_PARAMS))
+N_CHANNELS := $(shell jq -r '.dataset_params.n_channels' $(CONFIG_FILE_PARAMS))
+DATASET_NAME := $(shell jq -r '.dataset_params.dataset_name' $(CONFIG_FILE_PARAMS))
+MASK_TYPE := $(shell jq -r '.dataset_params.mask_name' $(CONFIG_FILE_PARAMS))
+REPEAT_IMAGES := $(shell jq -r '.dataset_params.repeat_images' $(CONFIG_FILE_PARAMS))
 
-MODEL_IDENTIFIER := $(N_TRAIN)_$(N_TEST)_$(N_CLASSES)_$(MASK_PERCENTAGE)_$(EPOCHS)_$(BATCH_SIZE)_$(LEARNING_RATE)
+BATCH_SIZE := $(shell jq -r '.train_params.batch_size' $(CONFIG_FILE_PARAMS))
+EPOCHS := $(shell jq -r '.train_params.epochs' $(CONFIG_FILE_PARAMS))
+LEARNING_RATE := $(shell jq -r '.train_params.learning_rate' $(CONFIG_FILE_PARAMS))
+INITIALIZE := $(shell jq -r '.train_params.initialize' $(CONFIG_FILE_PARAMS))
+LR_SCHEDULER := $(shell jq -r '.train_params.scheduler' $(CONFIG_FILE_PARAMS))
+MODEL_NAME := $(shell jq -r '.train_params.model_name' $(CONFIG_FILE_PARAMS))
+
+MODEL_IDENTIFIER := $(N_TRAIN)_$(N_TEST)_$(N_CLASSES)_$(EPOCHS)_$(BATCH_SIZE)_$(LEARNING_RATE)
 
 ifeq ($(LR_SCHEDULER), True)
 	MODEL_IDENTIFIER := $(MODEL_IDENTIFIER)_scheduled
@@ -38,7 +38,7 @@ ifeq ($(RGB), True)
 	MODEL_IDENTIFIER := $(MODEL_IDENTIFIER)_rgb
 endif
 
-DATASET_IDENTIFIER := $(N_CLASSES)_$(MASK_PERCENTAGE)_$(MASK_TYPE)
+DATASET_IDENTIFIER := $(N_CLASSES)_$(MASK_TYPE)
 ifeq ($(REPEAT_IMAGES), True)
 	DATASET_IDENTIFIER := $(DATASET_IDENTIFIER)_repeated
 endif
@@ -72,9 +72,6 @@ TRAIN_CODE_PATH := $(SRC_FOLDER)/train.py
 TRAIN_PATH := $(DATASET_FOLDER)/train/dataset_$(N_TRAIN)_$(DATASET_IDENTIFIER).pth
 TEST_PATH := $(DATASET_FOLDER)/test/dataset_$(N_TEST)_$(DATASET_IDENTIFIER).pth
 
-
-LOSS_DATA_PATH := $(LOSSES_DATA_FOLDER)/$(MODEL_NAME)_$(MODEL_IDENTIFIER).csv
-LR_DATA_PATH := $(LR_DATA_FOLDER)/$(MODEL_NAME)_$(MODEL_IDENTIFIER).csv
 RESULTS_PLOT_PATH := $(RESULTS_PLOT_FOLDER)/$(MODEL_NAME)_$(MODEL_IDENTIFIER).png
 RESULTS_PATH := $(RESULTS_FOLDER)/$(MODEL_NAME)_$(MODEL_IDENTIFIER).json
 WEIGHTS_PATH := $(WEIGHTS_FOLDER)/$(MODEL_NAME)_$(MODEL_IDENTIFIER).pth
@@ -83,7 +80,7 @@ WEIGHTS_PATH := $(WEIGHTS_FOLDER)/$(MODEL_NAME)_$(MODEL_IDENTIFIER).pth
 .DEFAULT:
 	@echo "Invalid target. Please run 'make help' for more information."
 
-.PHONY: config preprocess train test help
+.PHONY: config preprocess train test zip help
 
 config:
 	@echo '{"raw_data_folder": "$(RAW_DATA_FOLDER)", "dataset_path": "$(DATASET_FOLDER)", "weights_path": "$(WEIGHTS_PATH)", "loss_figure_path": "$(LOSS_FIGURE_PATH)", "results_path": "$(RESULTS_PATH)", "results_plot_path": "$(RESULTS_PLOT_PATH)", "samples_folder": "$(SAMPLES_FOLDER)"' > $(CONFIG_FILE_PATHS)
@@ -120,4 +117,6 @@ help:
 	@echo "  preprocess  - Preprocess the dataset"
 	@echo "  train       - Train the model"
 	@echo "  test        - Run tests"
+	@echo "  plot        - Plot the results from the json files"
+	@echo "  zip		 - Zip the json weights"
 	@echo "  help        - Display this help message"
