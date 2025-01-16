@@ -13,7 +13,7 @@ from utils.masks import SquareMask, LineMask
 parent_folder = Path(__file__).resolve().parents[2]
 print(f"Parent folder: {parent_folder}", flush=True)
 sys.path.append(str(parent_folder))
-from src.utils.parameter_selection import filter_params
+from src.utils.parameter_selection import filter_params, typecast_bool
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--paths", type=Path, required=True, help="Path to the paths config file")
@@ -47,6 +47,7 @@ image_height = int(params["image_height"])
 images_extension = str(paths["image_extension"])
 mask_type = params.get("mask_name")
 mask_params = params.get("masks_configs", {}).get(mask_type, {})
+repeat_images = typecast_bool(params.get("repeat_images"))
 
 if not original_images_folder.exists():
     sys.exit("The original images folder does not exist.")
@@ -92,13 +93,14 @@ if n_test % n_classes != 0:
 train_images_per_class: int = n_train // n_classes
 test_images_per_class: int = n_test // n_classes
 
-images_per_class_in_dataset = len(list(Path(folder_list[0]/image_subpath).glob(f"*{images_extension}")))
+if not repeat_images:
+    images_per_class_in_dataset = len(list(Path(folder_list[0]/image_subpath).glob(f"*{images_extension}")))
 
-if images_per_class_in_dataset <= 0:
-    sys.exit(f"The train images folder {folder_list[0]} is empty.")
-# Check if the train images folder contains enough images to create the dataset
-if train_images_per_class + test_images_per_class > images_per_class_in_dataset:
-    sys.exit(f"The train images folder does not contain enough images to create the dataset with {n_train} train images and {n_test} test images.")
+    if images_per_class_in_dataset <= 0:
+        sys.exit(f"The train images folder {folder_list[0]} is empty.")
+    # Check if the train images folder contains enough images to create the dataset
+    if train_images_per_class + test_images_per_class > images_per_class_in_dataset:
+        sys.exit(f"The train images folder does not contain enough images to create the dataset with {n_train} train images and {n_test} test images.")
 
 # Create the SquareMask object
 mask_class = MaskClass(image_width, image_height, **filtered_params)
@@ -128,7 +130,7 @@ def extract_image_info(image_list: list):
 # Iterate over the train images class folders
 print(f"Creating the dataset with:\n{n_train} train images\n{n_test} test images\n{n_classes} classes\n{mask_percentage}% mask\n", flush=True)
 
-def create_dicts(folder_list, n_classes, n_train, n_test, train_images_per_class, test_images_per_class):
+def create_dicts(folder_list: list, n_classes: int, n_train: int, n_test: int, train_images_per_class: int, test_images_per_class: int, repeat: bool):
     # Declare the lists to store the images, labels and masks
     train_images_list = [None] * n_train
     train_masks_list = [None] * n_train
@@ -150,7 +152,10 @@ def create_dicts(folder_list, n_classes, n_train, n_test, train_images_per_class
         # Get the label of the class folder
         label = folder.name
         
-        images = random.sample(images, train_images_per_class + test_images_per_class)
+        if repeat:
+            images = random.choices(images, k=train_images_per_class + test_images_per_class)
+        else:
+            images = random.sample(images, train_images_per_class + test_images_per_class)
         
         train_images = random.sample(images, train_images_per_class)
         test_images = [img for img in images if img not in train_images]
@@ -178,7 +183,7 @@ def create_dicts(folder_list, n_classes, n_train, n_test, train_images_per_class
     
     return train_data, test_data
 
-train_data, test_data = create_dicts(folder_list, n_classes, n_train, n_test, train_images_per_class, test_images_per_class)
+train_data, test_data = create_dicts(folder_list, n_classes, n_train, n_test, train_images_per_class, test_images_per_class, repeat_images)
 
 for data in [train_data, test_data]:
     for key in data.keys():
