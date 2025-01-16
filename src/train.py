@@ -9,7 +9,7 @@ import argparse
 
 from utils.parameter_selection import filter_params
 from utils.load_config import load_params
-from utils.metrics import calculate_psnr, calculate_ssim
+from utils.train_loop import train_loop
 from utils.get_workers_number import get_available_cpus
 from utils.to_black_and_white import dataset_to_black_and_white
 from utils.increment_filepath import increment_filepath
@@ -146,66 +146,16 @@ if device == th.device("cpu"):
     
 print("Starting training", flush=True)
 start_time = time.time()
-train_losses = []
-train_psnr = []
-train_ssim = []
 
-test_losses = []
-test_psnr = []
-test_ssim = []
-
-learning_rates = []
-
-def get_metrics(model: nn.Module, device: th.device, criterion: nn.Module, image: th.tensor, mask: th.tensor) -> tuple:
-    image.to(device)
-    mask.to(device)
-    output = model(image, mask)
-    loss = criterion(output * mask, image * mask) / mask.sum()
-    psnr = calculate_psnr(image * mask, output * mask)
-    ssim = calculate_ssim(image * mask, output * mask)
-    return loss, psnr, ssim
-
-print("\n\n", flush=True)
-for epoch in range(epochs):
-    print("Training epoch", epoch, flush=True)
-    model.train()
-    batch_loss = 0.0
-    batch_psnr = 0.0
-    batch_ssim = 0.0
-    for batch in train_loader:
-        image, mask = batch
-        loss, psnr, ssim = get_metrics(model, device, criterion, image, mask)
-        batch_loss += loss.item()
-        batch_psnr += psnr.item()
-        batch_ssim += ssim.item()
-        optimizer.zero_grad()
-        loss.backward()
-        optimizer.step()
-    
-    # Divide the loss by the number of batches
-    train_losses.append(batch_loss / len(train_loader.dataset))
-    train_psnr.append(batch_psnr / len(train_loader.dataset))
-    train_ssim.append(batch_ssim / len(train_loader.dataset))
-    
-    model.eval()
-    with th.no_grad():
-        batch_loss = 0.0
-        batch_psnr = 0.0
-        batch_ssim = 0.0
-        for batch in test_loader:
-            image, mask = batch
-            loss, psnr, ssim = get_metrics(model, device, criterion, image, mask)
-            batch_loss += loss.detach().item()
-            batch_psnr += psnr.detach().item()
-            batch_ssim += ssim.detach().item()
-        test_losses.append(batch_loss / len(test_loader.dataset))
-        test_psnr.append(batch_psnr / len(test_loader.dataset))
-        test_ssim.append(batch_ssim / len(test_loader.dataset))
-        
-    if scheduler is not None:
-        learning_rates.append(scheduler.get_last_lr()[0])
-        scheduler.step()
-    print(f"Epoch {epoch} finished\n", flush=True)
+print("\nModel type is:", type(model), flush=True)
+train_losses, train_psnr, train_ssim, test_losses, test_psnr, test_ssim, learning_rates = train_loop(model = model,
+                                                                                                     optimizer = optimizer,
+                                                                                                     criterion = criterion,
+                                                                                                     train_loader = train_loader,
+                                                                                                     test_loader = test_loader,
+                                                                                                     epochs = epochs,
+                                                                                                     scheduler = scheduler,
+                                                                                                     device = device)
         
 print(f"Training finished in {time.time() - start_time} seconds", flush=True)
 
