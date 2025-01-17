@@ -11,8 +11,10 @@ from torch.utils.data import DataLoader
 from models.ImageDataset import CustomImageDataset
 from utils.get_workers_number import get_available_cpus
 from utils.increment_filepath import increment_filepath
+import time
 
 
+start_time = time.time()
 parser = argparse.ArgumentParser()
 parser.add_argument("--paths", type=Path, required=True, help="Path to the paths config file")
 
@@ -129,4 +131,8 @@ with open(train_info_path, "w") as f:
     f.write(f"Searching range: {search_space}\n")
     
 print(f"Best parameters: {best_params}", flush=True)
+
+end_time = time.time()
+
+print(f"Time taken: {end_time - start_time}", flush=True)
     
