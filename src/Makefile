@@ -6,7 +6,7 @@ PYTHONPATH := $(SRC_FOLDER)
 PYTHON := $(shell which python3)
 
 CONFIG_FILE_PATHS := $(SRC_FOLDER)/paths.json
-CONFIG_FILE_PARAMS := $(SRC_FOLDER)/params1.json
+CONFIG_FILE_PARAMS := $(SRC_FOLDER)/params.json
 
 N_TRAIN := $(shell jq -r '.dataset_params.n_train' $(CONFIG_FILE_PARAMS))
 N_TEST := $(shell jq -r '.dataset_params.n_test' $(CONFIG_FILE_PARAMS))
