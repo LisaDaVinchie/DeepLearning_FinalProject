@@ -39,4 +39,4 @@ figs/
 src/**.json
 
 # Sbatch files
-src/job.sh
+src/**.sh
