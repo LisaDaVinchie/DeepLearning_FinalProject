@@ -3,6 +3,7 @@ from torch import nn
 import torch.nn.functional as F
 from typing import List
 from models import mask_image
+import math
 
 class simple_conv(nn.Module):
     def __init__(self, in_channels: int = 3, middle_channels: List[int] = [64, 128, 256], kernel_size: List[int] = [3, 3, 3], stride: List[int] = [2, 2, 2], padding: List[int] = [1, 1, 1], output_padding: List[int] = [1, 1, 1]):
@@ -67,6 +68,8 @@ class conv_maxpool(nn.Module):
             
         self.print_sizes = print_sizes
         
+        assert kernel_size % 2 == 1, "Kernel size must be an odd number"
+        
         # Parameters
         activation = nn.ReLU()
         
@@ -117,6 +120,9 @@ class conv_maxpool(nn.Module):
         x = mask_image(image, mask)
         
         encodings = []
+        
+        if self.print_sizes:
+            print(f"Input: {x.shape}", flush=True)
         
         # Encoder
         for conv, pool in zip(self.encoder_blocks, self.pools):
