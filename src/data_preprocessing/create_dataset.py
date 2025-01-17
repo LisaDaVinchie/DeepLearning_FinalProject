@@ -133,6 +133,7 @@ def extract_image_info(image_list: list):
 # Iterate over the train images class folders
 print(f"Creating the dataset with:\n{n_train} train images\n{n_test} test images\n{n_classes}\n", flush=True)
 
+
 def create_dicts(folder_list: list, n_classes: int, n_train: int, n_test: int, train_images_per_class: int, test_images_per_class: int, repeat: bool):
     # Declare the lists to store the images, labels and masks
     train_images_list = [None] * n_train
@@ -146,8 +147,10 @@ def create_dicts(folder_list: list, n_classes: int, n_train: int, n_test: int, t
     # Iterate over the train images class folders
     i: int = 0
     j: int = 0
+    class_n = 0
     for folder in random.sample(folder_list, n_classes):
-        print(f"Processing class folder {folder.name}", flush=True)
+        print(f"Processing class folder {class_n}", flush=True)
+        class_n += 1
         # Get a list of the images in the class folder
         
         images = list(Path(folder / image_subpath).glob(f"*{images_extension}"))
@@ -159,9 +162,17 @@ def create_dicts(folder_list: list, n_classes: int, n_train: int, n_test: int, t
             images = random.choices(images, k=train_images_per_class + test_images_per_class)
         else:
             images = random.sample(images, train_images_per_class + test_images_per_class)
+            
+        print(f"Chosen {len(images)} images", flush=True)
         
-        train_images = random.sample(images, train_images_per_class)
-        test_images = [img for img in images if img not in train_images]
+        train_idxs = random.sample(range(len(images)), train_images_per_class)
+        test_idxs = [idx for idx in range(len(images)) if idx not in train_idxs]
+        
+        train_images = [images[idx] for idx in train_idxs]
+        test_images = [images[idx] for idx in test_idxs]
+        
+        if len(test_images) != test_images_per_class:
+            sys.exit(f"Error: {len(test_images)} test images found. Expected {test_images_per_class}.")
                 
         # Iterate over the train images
         train_images_list[i:i + train_images_per_class], train_masks_list[i:i + train_images_per_class] = extract_image_info(train_images)
@@ -174,6 +185,7 @@ def create_dicts(folder_list: list, n_classes: int, n_train: int, n_test: int, t
         
         test_labels_list[j:j + test_images_per_class] = [label] * test_images_per_class
         j += test_images_per_class
+        print("\n\n")
         
     print("Lists created.", flush=True)
             
