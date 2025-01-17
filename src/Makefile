@@ -60,7 +60,7 @@ FIGURES_FOLDER := $(BASE_DIR)/figs/$(DATASET_NAME)
 
 WEIGHTS_FOLDER := $(DATA_FOLDER)/weights/$(DATASET_NAME)
 RESULTS_FOLDER := $(DATA_FOLDER)/results/$(DATASET_NAME)
-LOSSES_DATA_FOLDER := $(DATA_FOLDER)/losses/$(DATASET_NAME)
+OPTIM_FOLDER := $(DATA_FOLDER)/optimization/$(DATASET_NAME)
 TESTS_FOLDER := $(SRC_FOLDER)/tests
 RESULTS_PLOT_FOLDER := $(FIGURES_FOLDER)/results
 SAMPLES_FOLDER := $(FIGURES_FOLDER)/samples
@@ -75,6 +75,7 @@ TEST_PATH := $(DATASET_FOLDER)/test/dataset_$(N_TEST)_$(DATASET_IDENTIFIER).pth
 RESULTS_PLOT_PATH := $(RESULTS_PLOT_FOLDER)/$(MODEL_NAME)_$(MODEL_IDENTIFIER).png
 RESULTS_PATH := $(RESULTS_FOLDER)/$(MODEL_NAME)_$(MODEL_IDENTIFIER).json
 WEIGHTS_PATH := $(WEIGHTS_FOLDER)/$(MODEL_NAME)_$(MODEL_IDENTIFIER).pth
+OPTIM_PATH := $(OPTIM_FOLDER)/$(MODEL_NAME)_$(MODEL_IDENTIFIER).json
 
 
 .DEFAULT:
@@ -83,7 +84,7 @@ WEIGHTS_PATH := $(WEIGHTS_FOLDER)/$(MODEL_NAME)_$(MODEL_IDENTIFIER).pth
 .PHONY: config preprocess train test zip help
 
 config:
-	@echo '{"raw_data_folder": "$(RAW_DATA_FOLDER)", "dataset_path": "$(DATASET_FOLDER)", "weights_path": "$(WEIGHTS_PATH)", "loss_figure_path": "$(LOSS_FIGURE_PATH)", "results_path": "$(RESULTS_PATH)", "results_plot_path": "$(RESULTS_PLOT_PATH)", "samples_folder": "$(SAMPLES_FOLDER)"' > $(CONFIG_FILE_PATHS)
+	@echo '{"raw_data_folder": "$(RAW_DATA_FOLDER)", "dataset_path": "$(DATASET_FOLDER)", "weights_path": "$(WEIGHTS_PATH)", "loss_figure_path": "$(LOSS_FIGURE_PATH)", "results_path": "$(RESULTS_PATH)", "results_plot_path": "$(RESULTS_PLOT_PATH)", "samples_folder": "$(SAMPLES_FOLDER)", "optim_path": "$(OPTIM_PATH)"' > $(CONFIG_FILE_PATHS)
 ifeq ($(DATASET_NAME), tinyimagenet)
 	@echo ', "train_path": "$(TRAIN_PATH)", "test_path": "$(TEST_PATH)", "image_extension": ".JPEG"' >> $(CONFIG_FILE_PATHS)
 else ifeq ($(DATASET_NAME), groceries)
@@ -105,7 +106,7 @@ plot: config
 
 optimize: config
 	@echo "Optimizing the model..."
-	$(PYTHON) $(SRC_FOLDER)/hyperparameter_optimization.py --paths $(CONFIG_FILE_PATHS) --params $(CONFIG_FILE_PARAMS)
+	$(PYTHON) $(SRC_FOLDER)/bayesian_optimization.py --paths $(CONFIG_FILE_PATHS)
 
 test: config
 	@echo "Running test..."
