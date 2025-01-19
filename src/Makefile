@@ -112,6 +112,10 @@ test: config
 	@echo "Running test..."
 	PYTHONPATH=$(PYTHONPATH) pytest
 
+zipw:
+	@echo "Zipping the weights..."
+	$(PYTHON) $(SRC_FOLDER)/zip_weights.py --weights_folder $(WEIGHTS_FOLDER)
+
 help:
 	@echo "Makefile targets:"
 	@echo "  config      - Generate configuration files"
