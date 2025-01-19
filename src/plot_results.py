@@ -18,15 +18,15 @@ if not results_folder.exists():
     
 result_files = list(results_folder.glob("*.json"))
 
-# Create or append to a txt file to save file paths and plot paths
-log_file = figs_folder / "plot_paths.txt"
-
 for file in result_files:
+    
+    file_name = file.stem
+    
+    print(f"Plotting {file_name}")
     # Load results
     with open(file, "r") as f:
         results = json.load(f)
         
-    file_name = file.stem
 
     # Extract metrics
     train_losses = results.get("train_loss", [])
@@ -83,3 +83,5 @@ for file in result_files:
     
     with open(plot_path.with_suffix(".txt"), "w") as log:
         log.write(f"Result file: {file}\n")
+        
+    print(f"Plotted {file_name} to {plot_path}\n\n")
