@@ -1,14 +1,37 @@
 import matplotlib.pyplot as plt
 import torch as th
 from pathlib import Path
+import argparse
+import json
+from models import autoencoder
 
-def sample_generation(model: th.nn.Module, data_loader: th.utils.data.DataLoader, n_samples: int, figs_folder: Path):
-    total_images = len(data_loader.dataset)
+parser = argparse.ArgumentParser()
+parser.add_argument("--path_config", type=Path, required=True, help="Path to the model file")
+
+args = parser.parse_args()
+path_config_file = args.path_config
+
+with open(path_config_file, "r") as f:
+    config = json.load(f)
+    
+test_path = Path(config["test_path"])
+
+if not test_path.exists():
+    print(f"Path {test_path} does not exist", flush=True)
+    exit()
+
+test_dataset = th.load(test_path)
+
+
+
+def sample_generation(model: th.nn.Module, dataset: dict, n_samples: int, figs_folder: Path):
+    total_images = len(dataset["images"])
     
     sample_idx = th.randint(0, total_images, (n_samples,))
     
     for idx in sample_idx:
-        image, mask = data_loader.dataset[idx]
+        image = dataset["images"][idx]
+        mask = dataset["masks"][idx]
         
         model.eval()
         with th.no_grad():
@@ -30,3 +53,5 @@ def sample_generation(model: th.nn.Module, data_loader: th.utils.data.DataLoader
         
         fig.savefig(figs_folder / f"sample_{idx}.png")
         plt.close(fig)
+        
+model = autoencoder.conv_maxpool(in_channels=3, middle_channels=[16, 32, 64, 128, 256])
