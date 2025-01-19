@@ -6,7 +6,7 @@
 src/hyperparameter_optimization.py
 
 # Logs files folder
-src/logs
+src/*logs*
 
 # The virtual environment folder
 venv
