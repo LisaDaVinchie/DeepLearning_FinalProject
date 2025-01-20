@@ -37,6 +37,8 @@ weights_path = Path(config["weights_path"])
 results_path = Path(config["results_path"])
 samples_folder = Path(config["samples_folder"])
 
+del config
+
 if not train_dataset_path.exists():
     print(f"Path {train_dataset_path} does not exist", flush=True)
     exit()
@@ -71,6 +73,10 @@ train_params = load_params(params_config_path, "train_params")
 locals().update(dataset_params)
 locals().update(train_params)
 
+print("Loaded parameters", flush=True)
+
+del dataset_params, train_params
+
 
 n_channels: int = 1 + 2 * int(rgb)
 print("rgb", rgb, flush=True)
@@ -79,6 +85,8 @@ with open(params_config_path, "r") as f:
     config = json.load(f)
     
 model_params = config.get("model_configs", {}).get(model_name, {})
+
+del config
 
 # Mapping model names to classes
 MODEL_CLASSES = {
@@ -103,7 +111,7 @@ if not filtered_params:
 
 print(f"Passing parameters n_channels={n_channels}, **filtered_params={filtered_params} to the model", flush=True)
 model = ModelClass(n_channels, **filtered_params)
-
+del filtered_params
 print("Loading datasets", flush=True)
 
 print("Loading datasets", flush=True)
@@ -117,11 +125,14 @@ if not rgb:
     print("Converted datasets to black and white", flush=True)
 
 print("Train dataset loaded", flush=True)
-test_set = CustomImageDataset(train_dataset)
-train_loader = DataLoader(test_set, batch_size=batch_size, shuffle=True, pin_memory=True)
 
-train_set = CustomImageDataset(test_dataset)
-test_loader = DataLoader(train_set, batch_size=batch_size, shuffle=False, pin_memory=True)
+train_set = CustomImageDataset(train_dataset)
+train_loader = DataLoader(train_set, batch_size=batch_size, shuffle=True, pin_memory=True)
+del train_set, train_dataset
+
+test_set = CustomImageDataset(test_dataset)
+test_loader = DataLoader(test_set, batch_size=batch_size, shuffle=False, pin_memory=True)
+del test_set, test_dataset
 print("Test dataLoader created", flush=True)
 
 device = th.device("cuda" if th.cuda.is_available() else "cpu")
@@ -195,4 +206,4 @@ with open(weights_path.with_suffix(".txt"), "w") as f:
 print("Model saved", flush=True)
 
 samples_folder.mkdir(parents=True, exist_ok=True)
-sample_generation(model, test_dataset, 10, samples_folder)
+sample_generation(model, test_loader, 10, samples_folder)
