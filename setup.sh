@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Define the virtual environment directory
-VENV_DIR="venv"
+VENV_DIR="thesis_venv"
 
 # Check if the virtual environment exists
 if [ ! -d "$VENV_DIR" ]; then
