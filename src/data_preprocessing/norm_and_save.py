@@ -2,13 +2,26 @@ import numpy as np
 from pathlib import Path
 import torch as th
 import sys
+import json
+import argparse
 
 if len(sys.argv) < 3:
     raise ValueError("Usage: python save_as_dict.py <images_folder> <masks_folder> <output_file>")
 
-images_folder = Path(sys.argv[1])
-masks_folder = Path(sys.argv[2])
-output_file = Path(sys.argv[3])
+parser = argparse.ArgumentParser()
+parser.add_argument("--paths", type=Path, required=True, help="Path to the paths config file")
+
+
+args = parser.parse_args()
+
+paths_config_path = args.paths
+
+with open(paths_config_path, "r") as f:
+    config = json.load(f)
+    
+images_folder = Path(config["images_folder"])
+masks_folder = Path(config["masks_folder"])
+output_file = Path(config["output_file"])
 
 # Check if the data folders exist
 assert images_folder.exists(), "Images folder does not exist"
