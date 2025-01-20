@@ -24,9 +24,9 @@ def train_step(model: nn.Module, optimizer: th.optim.Optimizer, criterion: nn.Mo
                                         image = image,
                                         mask = mask,
                                         device = device)
-        batch_loss += loss.item()
-        batch_psnr += psnr.item()
-        batch_ssim += ssim.item()
+        batch_loss += loss.detach().item()
+        batch_psnr += psnr.detach().item()
+        batch_ssim += ssim.detach().item()
         optimizer.zero_grad()
         loss.backward()
         optimizer.step()
