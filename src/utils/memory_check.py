@@ -31,13 +31,13 @@ def memory_availability_check(model, train_loader, test_loader):
     
     required_memory = model_memory + train_batch_memory + test_batch_memory
     
-    available_memory, total_memory = check_available_ram()
+    available_memory, _ = check_available_ram()
     
     if available_memory > required_memory:
-        print("Memory check passed")
+        print("Memory check passed", flush=True)
         return True
     else:
-        print(f"Memory check failed, model needs at least {required_memory} MB, but only {available_memory} MB is available")
+        print(f"Memory check failed, model needs at least {required_memory} MB, but only {available_memory} MB is available", flush=True)
         return False
     
     
