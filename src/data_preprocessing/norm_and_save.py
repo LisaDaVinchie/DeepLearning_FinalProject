@@ -10,22 +10,26 @@ if len(sys.argv) < 3:
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--paths", type=Path, required=True, help="Path to the paths config file")
+parser.add_argument("--params", type=Path, required=True, help="Path to the parameters config file")
 
 
 args = parser.parse_args()
 
 paths_config_path = args.paths
+params_config_path = args.params
 
 with open(paths_config_path, "r") as f:
     config = json.load(f)
     
-images_folder = Path(config["images_folder"])
-masks_folder = Path(config["masks_folder"])
-output_file = Path(config["output_file"])
+images_folder = Path(config["bathymetry"]["base"])
+masks_folder = Path(config["mask"]["base"])
+dataset_path = Path(config["dataset_path"])
 
 # Check if the data folders exist
-assert images_folder.exists(), "Images folder does not exist"
-assert masks_folder.exists(), "Masks folder does not exist"
+if not images_folder.exists():
+    raise ValueError(f"Images folder {images_folder} does not exist")
+if not masks_folder.exists():
+    raise ValueError(f"Masks folder {masks_folder} does not exist")
 
 print("Folders exist")
 
@@ -83,10 +87,10 @@ dataset['images'] = images
 dataset['masked_images'] = masked_images
 
 # Create the folder to save the dictionary, if it does not exist
-dict_folder = output_file.parent
+dict_folder = dataset_path.parent
 dict_folder.mkdir(exist_ok=True, parents=True)
 
-print(f"Saving dictionary to {output_file}")
+print(f"Saving dictionary to {dataset_path}")
 # Save the dictionary
-th.save(dataset, output_file)
+th.save(dataset, dataset_path)
 print("Done")
