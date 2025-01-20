@@ -56,7 +56,8 @@ if not original_images_folder.exists():
     sys.exit("The original images folder does not exist.")
 
 # Declare the path to the train images inner folder
-image_subpath = "images"
+if "tinyimagenet" in str(original_images_folder):
+    image_subpath = "images"
 
 # Declare the dataset extension
 dataset_extension: str = ".pth"
@@ -97,7 +98,10 @@ train_images_per_class: int = n_train // n_classes
 test_images_per_class: int = n_test // n_classes
 
 if not repeat_images:
-    images_per_class_in_dataset = len(list(Path(folder_list[0]/image_subpath).glob(f"*{images_extension}")))
+    folder_name = Path(folder_list[0])
+    if "tinyimagenet" in str(original_images_folder):
+        folder_name = Path(folder_name / image_subpath)
+    images_per_class_in_dataset = len(list(folder_name.glob(f"*{images_extension}")))
 
     if images_per_class_in_dataset <= 0:
         sys.exit(f"The train images folder {folder_list[0]} is empty.")
@@ -153,7 +157,11 @@ def create_dicts(folder_list: list, n_classes: int, n_train: int, n_test: int, t
         class_n += 1
         # Get a list of the images in the class folder
         
-        images = list(Path(folder / image_subpath).glob(f"*{images_extension}"))
+        folder_name = Path(folder)
+        if "tinyimagenet" in str(original_images_folder):
+            folder_name = Path(folder_name / image_subpath)
+            
+        images = list(folder_name.glob(f"*{images_extension}"))
         
         # Get the label of the class folder
         label = folder.name
