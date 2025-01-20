@@ -19,8 +19,6 @@ def sample_generation(model: th.nn.Module, dataloader: DataLoader, n_samples: in
             image = dataset[idx][0].unsqueeze(0)
             mask = dataset[idx][1].unsqueeze(0)
 
-            print(image.shape, mask.shape)
-
             model.eval()
             with th.no_grad():
                 output = model(image, mask)
