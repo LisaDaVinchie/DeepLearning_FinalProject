@@ -13,6 +13,7 @@ from utils.train_loop import train_loop
 from utils.get_workers_number import get_available_cpus
 from utils.to_black_and_white import dataset_to_black_and_white
 from utils.increment_filepath import increment_filepath
+from utils.memory_check import memory_availability_check
 from models.ImageDataset import CustomImageDataset
 from models.transformer import TransformerInpainting
 import models.autoencoder as autoencoder
@@ -146,6 +147,10 @@ if device == th.device("cpu"):
     
 print("Starting training", flush=True)
 start_time = time.time()
+
+if not memory_availability_check(model, train_loader, test_loader):
+    print("Not enough memory to train the model", flush=True)
+    exit()
 
 print("\nModel type is:", type(model), flush=True)
 train_losses, train_psnr, train_ssim, test_losses, test_psnr, test_ssim, learning_rates = train_loop(model = model,
