@@ -18,6 +18,10 @@ if not results_folder.exists():
     
 result_files = list(results_folder.glob("*.json"))
 
+if len(result_files) == 0:
+    print(f"No result files found in {results_folder}")
+    exit(1)
+
 for file in result_files:
     
     file_name = file.stem

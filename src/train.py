@@ -75,8 +75,6 @@ locals().update(train_params)
 
 print("Loaded parameters", flush=True)
 
-del dataset_params, train_params
-
 
 n_channels: int = 1 + 2 * int(rgb)
 print("rgb", rgb, flush=True)
@@ -196,6 +194,7 @@ extra_info = f"Model: {model_name}\nModel parameters: {model_params}\nDataset pa
 
 with open(results_path.with_suffix(".txt"), "w") as f:
     f.write(extra_info)
+print("Results saved", flush=True)
 
 weights_path = increment_filepath(weights_path)
 th.save(model.state_dict(), weights_path)
@@ -203,7 +202,8 @@ th.save(model.state_dict(), weights_path)
 extra_info = f"Model: {model_name}\nModel parameters: {model_params}\nDataset parameters: {dataset_params}\nTraining Time: {time.time() - start_time} seconds\n\n\n"
 with open(weights_path.with_suffix(".txt"), "w") as f:
     f.write(extra_info)
-print("Model saved", flush=True)
+print("Weights saved", flush=True)
 
 samples_folder.mkdir(parents=True, exist_ok=True)
 sample_generation(model, test_loader, 10, samples_folder)
+print("Samples generated", flush=True)
