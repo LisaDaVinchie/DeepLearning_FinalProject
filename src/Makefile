@@ -81,7 +81,7 @@ OPTIM_PATH := $(OPTIM_FOLDER)/$(MODEL_NAME)_$(MODEL_IDENTIFIER).json
 .DEFAULT:
 	@echo "Invalid target. Please run 'make help' for more information."
 
-.PHONY: config preprocess train test zip help
+.PHONY: config preprocess train test zipw help
 
 config:
 	@echo '{"raw_data_folder": "$(RAW_DATA_FOLDER)", "dataset_path": "$(DATASET_FOLDER)", "weights_path": "$(WEIGHTS_PATH)", "loss_figure_path": "$(LOSS_FIGURE_PATH)", "results_path": "$(RESULTS_PATH)", "results_plot_path": "$(RESULTS_PLOT_PATH)", "samples_folder": "$(SAMPLES_FOLDER)", "optim_path": "$(OPTIM_PATH)"' > $(CONFIG_FILE_PATHS)
