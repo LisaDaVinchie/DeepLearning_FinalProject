@@ -91,7 +91,7 @@ def optimize_autoencoder(trial):
     
     latent_dim = trial.suggest_categorical('latent_dim', [16, 32, 64, 128])
     kernel_size = trial.suggest_categorical('kernel_size', [3, 5, 7, 9])
-    learning_rate = trial.suggest_loguniform('learning_rate', 1e-4, 1e-2)
+    learning_rate = trial.suggest_categorical('learning_rate', [0.01, 0.001, 0.0001, 0.00001])
     
     print(f"Optimizing with parameters: latent_dim={latent_dim}, kernel_size={kernel_size}, learning_rate={learning_rate}\n")
     
