@@ -148,7 +148,7 @@ if device == th.device("cpu"):
 print("Starting training", flush=True)
 start_time = time.time()
 
-if not memory_availability_check(model, train_loader, test_loader):
+if not memory_availability_check(model, train_loader, test_loader, optimizer):
     print("Not enough memory to train the model", flush=True)
     exit()
 
