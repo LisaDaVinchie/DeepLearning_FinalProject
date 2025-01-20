@@ -14,6 +14,7 @@ from utils.get_workers_number import get_available_cpus
 from utils.to_black_and_white import dataset_to_black_and_white
 from utils.increment_filepath import increment_filepath
 from utils.memory_check import memory_availability_check
+from generate_samples import sample_generation
 from models.ImageDataset import CustomImageDataset
 from models.transformer import TransformerInpainting
 import models.autoencoder as autoencoder
@@ -34,6 +35,7 @@ train_dataset_path = Path(config["train_path"])
 test_dataset_path = Path(config["test_path"])
 weights_path = Path(config["weights_path"])
 results_path = Path(config["results_path"])
+samples_folder = Path(config["samples_folder"])
 
 if not train_dataset_path.exists():
     print(f"Path {train_dataset_path} does not exist", flush=True)
@@ -191,3 +193,6 @@ extra_info = f"Model: {model_name}\nModel parameters: {model_params}\nDataset pa
 with open(weights_path.with_suffix(".txt"), "w") as f:
     f.write(extra_info)
 print("Model saved", flush=True)
+
+samples_folder.mkdir(parents=True, exist_ok=True)
+sample_generation(model, test_dataset, 10, samples_folder)

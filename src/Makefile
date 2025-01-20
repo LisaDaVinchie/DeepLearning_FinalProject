@@ -63,7 +63,7 @@ RESULTS_FOLDER := $(DATA_FOLDER)/results/$(DATASET_NAME)
 OPTIM_FOLDER := $(DATA_FOLDER)/optimization/$(DATASET_NAME)
 TESTS_FOLDER := $(SRC_FOLDER)/tests
 RESULTS_PLOT_FOLDER := $(FIGURES_FOLDER)/results
-SAMPLES_FOLDER := $(FIGURES_FOLDER)/samples
+SAMPLES_FOLDER := $(FIGURES_FOLDER)/$(MODEL_IDENTIFIER)
 
 
 DATASET_CREATION_CODE_PATH := $(PREPROCESSING_FOLDER)/create_dataset.py
@@ -84,7 +84,7 @@ OPTIM_PATH := $(OPTIM_FOLDER)/$(MODEL_NAME)_$(MODEL_IDENTIFIER).json
 .PHONY: config preprocess train test zipw help
 
 config:
-	@echo '{"raw_data_folder": "$(RAW_DATA_FOLDER)", "dataset_path": "$(DATASET_FOLDER)", "weights_path": "$(WEIGHTS_PATH)", "loss_figure_path": "$(LOSS_FIGURE_PATH)", "results_path": "$(RESULTS_PATH)", "results_plot_path": "$(RESULTS_PLOT_PATH)", "samples_folder": "$(SAMPLES_FOLDER)", "optim_path": "$(OPTIM_PATH)"' > $(CONFIG_FILE_PATHS)
+	@echo '{"raw_data_folder": "$(RAW_DATA_FOLDER)", "dataset_path": "$(DATASET_FOLDER)", "weights_path": "$(WEIGHTS_PATH)", "loss_figure_path": "$(LOSS_FIGURE_PATH)", "results_path": "$(RESULTS_PATH)", "results_plot_path": "$(RESULTS_PLOT_PATH)", "samples_folder": "$(SAMPLES_FOLDER)/", "optim_path": "$(OPTIM_PATH)"' > $(CONFIG_FILE_PATHS)
 ifeq ($(DATASET_NAME), tinyimagenet)
 	@echo ', "train_path": "$(TRAIN_PATH)", "test_path": "$(TEST_PATH)", "image_extension": ".JPEG"' >> $(CONFIG_FILE_PATHS)
 else ifeq ($(DATASET_NAME), groceries)
