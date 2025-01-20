@@ -43,10 +43,12 @@ INTERPOLATED_FOLDER := $(RAW_DATA_FOLDER)/interpolated
 WEIGHTS_FOLDER := $(DATA_FOLDER)/weights_thesis
 RESULTS_FOLDER := $(DATA_FOLDER)/results_thesis
 DATASET_FOLDER := $(DATA_FOLDER)/dataset
+MASKS_FOLDER := $(DATA_FOLDER)/masks
 
 FIGURES_FOLDER := $(BASE_DIR)/figs_thesis
 
 OPTIM_FOLDER := $(DATA_FOLDER)/optimization_thesis
+MASKS_FOLDER := $(DATA_FOLDER)/masks
 TESTS_FOLDER := $(SRC_FOLDER)/tests
 RESULTS_PLOT_FOLDER := $(FIGURES_FOLDER)/results_thesis
 SAMPLES_FOLDER := $(FIGURES_FOLDER)/samples_thesis
@@ -55,10 +57,8 @@ SAMPLES_FOLDER := $(FIGURES_FOLDER)/samples_thesis
 DATASET_CREATION_CODE_PATH := $(PREPROCESSING_FOLDER)/create_dataset.py
 TRAIN_CODE_PATH := $(SRC_FOLDER)/train.py
 
-TRAIN_PATH := $(DATASET_FOLDER)/train/dataset_$(N_TRAIN)_$(DATASET_IDENTIFIER).pth
-TEST_PATH := $(DATASET_FOLDER)/test/dataset_$(N_TEST)_$(DATASET_IDENTIFIER).pth
-
 RESULTS_PLOT_PATH := $(RESULTS_PLOT_FOLDER)/$(MODEL_NAME)_$(MODEL_IDENTIFIER).png
+DATASET_PATH := $(DATASET_FOLDER)/dataset_$(N_TRAIN)_$(N_TEST).pth
 RESULTS_PATH := $(RESULTS_FOLDER)/$(MODEL_NAME)_$(MODEL_IDENTIFIER).json
 WEIGHTS_PATH := $(WEIGHTS_FOLDER)/$(MODEL_NAME)_$(MODEL_IDENTIFIER).pth
 OPTIM_PATH := $(OPTIM_FOLDER)/$(MODEL_NAME)_$(MODEL_IDENTIFIER).json
@@ -71,6 +71,7 @@ OPTIM_PATH := $(OPTIM_FOLDER)/$(MODEL_NAME)_$(MODEL_IDENTIFIER).json
 
 config:
 	@echo '{' > $(CONFIG_FILE_PATHS)
+	@echo ' "dataset_path": "$(DATASET_PATH)",' >> $(CONFIG_FILE_PATHS)
 	@echo '  "bathymetry" : {' >> $(CONFIG_FILE_PATHS)
 	@echo '		"folder" : "$(BATHYMETRY_FOLDER)",' >> $(CONFIG_FILE_PATHS)
 	@echo '		"base" : "$(BATHYMETRY_FOLDER)/base/",' >> $(CONFIG_FILE_PATHS)
@@ -90,6 +91,11 @@ config:
 	@echo '		"folder" : "$(INTERPOLATED_FOLDER)",' >> $(CONFIG_FILE_PATHS)
 	@echo '		"base" : "$(INTERPOLATED_FOLDER)/base/",' >> $(CONFIG_FILE_PATHS)
 	@echo '     "zip" : "$(INTERPOLATED_FOLDER)/zip/"' >> $(CONFIG_FILE_PATHS)
+	@echo '	},' >> $(CONFIG_FILE_PATHS)
+	@echo '  "masks" : {' >> $(CONFIG_FILE_PATHS)
+	@echo '		"folder" : "$(MASKS_FOLDER)",' >> $(CONFIG_FILE_PATHS)
+	@echo '		"base" : "$(MASKS_FOLDER)/base/",' >> $(CONFIG_FILE_PATHS)
+	@echo '     "zip" : "$(MASKS_FOLDER)/zip/"' >> $(CONFIG_FILE_PATHS)
 	@echo '	}' >> $(CONFIG_FILE_PATHS)
 	@echo '}' >> $(CONFIG_FILE_PATHS)
 
