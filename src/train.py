@@ -124,18 +124,24 @@ if not rgb:
 
 print("Train dataset loaded", flush=True)
 
-train_set = CustomImageDataset(train_dataset)
-train_loader = DataLoader(train_set, batch_size=batch_size, shuffle=True, pin_memory=True)
-del train_set, train_dataset
+def create_data_loaders(batch_size, train_dataset, test_dataset):
+    train_set = CustomImageDataset(train_dataset)
+    train_loader = DataLoader(train_set, batch_size=batch_size, shuffle=True, pin_memory=True)
+    del train_set, train_dataset
 
-test_set = CustomImageDataset(test_dataset)
-test_loader = DataLoader(test_set, batch_size=batch_size, shuffle=False, pin_memory=True)
-del test_set, test_dataset
-print("Test dataLoader created", flush=True)
+    test_set = CustomImageDataset(test_dataset)
+    test_loader = DataLoader(test_set, batch_size=batch_size, shuffle=False, pin_memory=True)
+    del test_set, test_dataset
+    return train_loader,test_loader
+
+train_loader, test_loader = create_data_loaders(batch_size, train_dataset, test_dataset)
+
+print("Data loaders created", flush=True)
 
 device = th.device("cuda" if th.cuda.is_available() else "cpu")
 print(f"Using device: {device}", flush=True)
 model = model.to(device)
+
 optimizer = optim.Adam(model.parameters(), lr=learning_rate)
 if scheduler:
     scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=sched_step, gamma=sched_gamma)
