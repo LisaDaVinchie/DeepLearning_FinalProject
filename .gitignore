@@ -32,9 +32,6 @@ data/*/
 data/*.zip
 !data/results/
 
-# Figures
-figs/
-
 # Json files in src folder
 src/**.json
 
