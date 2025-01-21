@@ -2,7 +2,7 @@ import torch as th
 from torch import nn
 import torch.nn.functional as F
 from typing import List
-from models import mask_image
+from models.mask_image import mask_image
 import math
 
 class simple_conv(nn.Module):
