@@ -1,0 +1,6 @@
+Model: conv_maxpool
+Model parameters: {'middle_channels': '32 64 128 256 512', 'kernel_size': '7', 'stride': '1', 'pool_size': '2', 'up_kernel': '2', 'up_stride': '2', 'print_sizes': 'False'}
+Dataset parameters: {'dataset_name': 'tinyimagenet', 'mask_name': 'lines', 'n_train': 3000, 'n_test': 1350, 'n_classes': 3, 'image_width': 64, 'image_height': 64, 'rgb': True, 'repeat_images': True}
+Training Time: 7282.323943138123 seconds
+
+
