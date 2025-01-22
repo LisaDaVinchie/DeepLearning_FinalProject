@@ -35,10 +35,11 @@ class SquareMask:
         return mask
 
 class LineMask:
-    def __init__(self, image_width: int, image_height: int, max_thickness: int = 3, n_lines: int = 5):
+    def __init__(self, image_width: int, image_height: int, min_thickness: int = 1, max_thickness: int = 3, n_lines: int = 5):
         self.image_width = image_width
         self.image_height = image_height
         self.max_tichkness = max_thickness
+        self.min_thickness = min_thickness
         self.n_lines = n_lines
 
     def create_mask(self) -> np.ndarray:
@@ -51,7 +52,7 @@ class LineMask:
             # Get random y locations to start line
             y1, y2 = np.random.randint(1, self.image_height), np.random.randint(1, self.image_height)
             # Get random thickness of the line drawn
-            thickness = np.random.randint(1, self.max_tichkness)
+            thickness = np.random.randint(self.min_thickness, self.max_tichkness)
             # Draw black line on the white mask
             cv2.line(mask,(x1,y1),(x2,y2),(1,1,1),thickness)
 
