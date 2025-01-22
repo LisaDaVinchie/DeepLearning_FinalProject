@@ -1,0 +1,1 @@
+Result file: /Users/lisadavinchie/Documents/University/DeepLearning/DeepLearning_FinalProject/data/results/tinyimagenet/conv_maxpool_3000_1350_15_10_32_0.001_initialized_rgb_15_lines.json
