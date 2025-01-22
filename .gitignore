@@ -33,6 +33,13 @@ data/*/
 data/*.zip
 !data/results/
 
+# Specific results
+data/**/*80_20_*
+figs/**/*80_20_*
+
+data/**/*30_10_*
+figs/**/*30_10_*
+
 # Json files in src folder
 src/**.json
 
