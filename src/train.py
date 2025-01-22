@@ -200,7 +200,7 @@ extra_info = f"Model: {model_name}\nModel parameters: {model_params}\nDataset pa
 
 with open(results_path.with_suffix(".txt"), "w") as f:
     f.write(extra_info)
-print("Results saved", flush=True)
+print(f"Results saved to {results_path}", flush=True)
 
 weights_path = increment_filepath(weights_path)
 th.save(model.state_dict(), weights_path)
@@ -208,8 +208,8 @@ th.save(model.state_dict(), weights_path)
 extra_info = f"Model: {model_name}\nModel parameters: {model_params}\nDataset parameters: {dataset_params}\nTraining Time: {time.time() - start_time} seconds\n\n\n"
 with open(weights_path.with_suffix(".txt"), "w") as f:
     f.write(extra_info)
-print("Weights saved", flush=True)
+print(f"Weights saved to {weights_path}", flush=True)
 
 samples_folder.mkdir(parents=True, exist_ok=True)
 sample_generation(model, test_loader, 10, samples_folder)
-print("Samples generated", flush=True)
+print(f"Samples generated and saved to {samples_folder}", flush=True)
