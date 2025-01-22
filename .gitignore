@@ -10,6 +10,7 @@ src/*logs*
 
 # The virtual environment folder
 venv
+thesis_venv
 
 # Python cache
 **__pycache__
