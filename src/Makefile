@@ -116,7 +116,7 @@ create_summary:
 	@echo "Initialize: $(INITIALIZE)" >> $(SUMMARY_PATH)
 
 train: create_summary config
-	@echo "Training the model..."
+	@echo "Training the model $(MODEL_IDENTIFIER)..."
 	$(PYTHON) $(TRAIN_CODE_PATH) --paths $(CONFIG_FILE_PATHS) --params $(CONFIG_FILE_PARAMS)
 
 plot: config
