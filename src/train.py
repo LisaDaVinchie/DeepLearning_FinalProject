@@ -12,7 +12,6 @@ from utils.load_config import load_params
 from utils.train_loop import train_loop
 from utils.get_workers_number import get_available_cpus
 from utils.to_black_and_white import dataset_to_black_and_white
-from utils.increment_filepath import increment_filepath
 from utils.memory_check import memory_availability_check
 from generate_samples import sample_generation
 from models.ImageDataset import CustomImageDataset
@@ -127,49 +126,54 @@ print("Train dataset loaded", flush=True)
 def create_data_loaders(batch_size, train_dataset, test_dataset):
     train_set = CustomImageDataset(train_dataset)
     train_loader = DataLoader(train_set, batch_size=batch_size, shuffle=True, pin_memory=True)
-    del train_set, train_dataset
+    del train_set
 
     test_set = CustomImageDataset(test_dataset)
     test_loader = DataLoader(test_set, batch_size=batch_size, shuffle=False, pin_memory=True)
-    del test_set, test_dataset
+    del test_set
     return train_loader,test_loader
 
 train_loader, test_loader = create_data_loaders(batch_size, train_dataset, test_dataset)
+del train_dataset, test_dataset
 
 print("Data loaders created", flush=True)
 
+# Move model to device if available
 device = th.device("cuda" if th.cuda.is_available() else "cpu")
 print(f"Using device: {device}", flush=True)
 model = model.to(device)
 
+if device == th.device("cpu"):
+    n_workers = get_available_cpus()
+    th.set_num_threads(n_workers)
+
+# Initialize optimizer and scheduler
 optimizer = optim.Adam(model.parameters(), lr=learning_rate)
 if scheduler:
     scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=sched_step, gamma=sched_gamma)
 else:
     scheduler = None
-    
+
+# Initialize weights
 def initialize_weights(module):
     if isinstance(module, nn.Conv2d) or isinstance(module, nn.Linear):
         nn.init.kaiming_normal_(module.weight, mode='fan_out', nonlinearity='relu')
         if module.bias is not None:
             nn.init.zeros_(module.bias)
+
 if initialize:
     model.apply(initialize_weights)
     
+# Initialize loss function
 criterion = nn.MSELoss()
 
-if device == th.device("cpu"):
-    n_workers = get_available_cpus()
-    th.set_num_threads(n_workers)
-    
-print("Starting training", flush=True)
-start_time = time.time()
-
+# Check that enough memory is available
 if not memory_availability_check(model, train_loader, test_loader, optimizer):
     print("Not enough memory to train the model", flush=True)
     exit()
 
-print("\nModel type is:", type(model), flush=True)
+print("Starting training", flush=True)
+start_time = time.time()
 train_losses, train_psnr, train_ssim, test_losses, test_psnr, test_ssim, learning_rates = train_loop(model = model,
                                                                                                      optimizer = optimizer,
                                                                                                      criterion = criterion,
@@ -178,8 +182,8 @@ train_losses, train_psnr, train_ssim, test_losses, test_psnr, test_ssim, learnin
                                                                                                      epochs = epochs,
                                                                                                      scheduler = scheduler,
                                                                                                      device = device)
-        
-print(f"Training finished in {time.time() - start_time} seconds", flush=True)
+train_time = time.time() - start_time
+print(f"Training finished in {train_time} seconds", flush=True)
 
 
 metrics_data = {
@@ -192,23 +196,13 @@ metrics_data = {
     "test_ssim": test_ssim,
 }
 
-results_path = increment_filepath(results_path)
 with open(results_path, "w") as f:
     json.dump(metrics_data, f)
 
 extra_info = f"Model: {model_name}\nModel parameters: {model_params}\nDataset parameters: {dataset_params}\nTraining Time: {time.time() - start_time} seconds\n\n\n"
 
-with open(results_path.with_suffix(".txt"), "w") as f:
-    f.write(extra_info)
-print(f"Results saved to {results_path}", flush=True)
-
-weights_path = increment_filepath(weights_path)
+# Save model weights
 th.save(model.state_dict(), weights_path)
-
-extra_info = f"Model: {model_name}\nModel parameters: {model_params}\nDataset parameters: {dataset_params}\nTraining Time: {time.time() - start_time} seconds\n\n\n"
-with open(weights_path.with_suffix(".txt"), "w") as f:
-    f.write(extra_info)
-print(f"Weights saved to {weights_path}", flush=True)
 
 samples_folder.mkdir(parents=True, exist_ok=True)
 sample_generation(model, test_loader, 10, samples_folder)
