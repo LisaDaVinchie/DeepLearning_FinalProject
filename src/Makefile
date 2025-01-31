@@ -17,7 +17,7 @@ RGB := $(shell jq -r '.dataset_params.rgb' $(CONFIG_FILE_PARAMS))
 N_CHANNELS := $(shell jq -r '.dataset_params.n_channels' $(CONFIG_FILE_PARAMS))
 DATASET_NAME := $(shell jq -r '.dataset_params.dataset_name' $(CONFIG_FILE_PARAMS))
 MASK_TYPE := $(shell jq -r '.dataset_params.mask_name' $(CONFIG_FILE_PARAMS))
-MASK_PARAMS := $(shell jq -r '.dataset_params.masks_configs' $(CONFIG_FILE_PARAMS))
+MASK_PARAMS := $(shell jq -r '.masks_configs' $(CONFIG_FILE_PARAMS))
 REPEAT_IMAGES := $(shell jq -r '.dataset_params.repeat_images' $(CONFIG_FILE_PARAMS))
 
 BATCH_SIZE := $(shell jq -r '.train_params.batch_size' $(CONFIG_FILE_PARAMS))
