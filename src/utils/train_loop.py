@@ -8,8 +8,8 @@ def get_metrics(model: nn.Module, criterion: nn.Module, image: th.tensor, mask: 
     mask = mask.to(device)
     output = model(image, mask)
     loss = criterion(output * mask, image * mask) / mask.sum()
-    psnr = calculate_psnr(image * mask, output * mask)
-    ssim = calculate_ssim(image * mask, output * mask)
+    psnr = calculate_psnr(image * mask, output * mask) / mask.sum()
+    ssim = calculate_ssim(image * mask, output * mask) / mask.sum()
     return loss, psnr, ssim
 
 def train_step(model: nn.Module, optimizer: th.optim.Optimizer, criterion: nn.Module, train_loader: DataLoader, test_loader: DataLoader, device: th.device = th.device("cpu")):
