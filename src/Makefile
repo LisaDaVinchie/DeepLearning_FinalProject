@@ -28,21 +28,7 @@ LR_SCHEDULER := $(shell jq -r '.train_params.scheduler' $(CONFIG_FILE_PARAMS))
 MODEL_NAME := $(shell jq -r '.train_params.model_name' $(CONFIG_FILE_PARAMS))
 MODEL_PARAMS := $(shell jq -r '.model_configs' $(CONFIG_FILE_PARAMS))
 
-# MODEL_IDENTIFIER := $(N_TRAIN)_$(N_TEST)_$(N_CLASSES)_$(EPOCHS)_$(BATCH_SIZE)_$(LEARNING_RATE)
-
 MODEL_IDENTIFIER := $(UNIX_TIMESTAMP)
-
-# ifeq ($(LR_SCHEDULER), True)
-# 	MODEL_IDENTIFIER := $(MODEL_IDENTIFIER)_scheduled
-# endif
-
-# ifeq ($(INITIALIZE), True)
-# 	MODEL_IDENTIFIER := $(MODEL_IDENTIFIER)_initialized
-# endif
-
-# ifeq ($(RGB), True)
-# 	MODEL_IDENTIFIER := $(MODEL_IDENTIFIER)_rgb
-# endif
 
 DATASET_IDENTIFIER := $(N_CLASSES)_$(MASK_TYPE)
 ifeq ($(REPEAT_IMAGES), True)
