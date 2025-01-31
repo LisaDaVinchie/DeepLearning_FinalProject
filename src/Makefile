@@ -8,6 +8,8 @@ PYTHON := $(shell which python3)
 CONFIG_FILE_PATHS := $(SRC_FOLDER)/paths.json
 CONFIG_FILE_PARAMS := $(SRC_FOLDER)/params.json
 
+UNIX_TIMESTAMP := $(shell date +"%s")
+
 N_TRAIN := $(shell jq -r '.dataset_params.n_train' $(CONFIG_FILE_PARAMS))
 N_TEST := $(shell jq -r '.dataset_params.n_test' $(CONFIG_FILE_PARAMS))
 N_CLASSES := $(shell jq -r '.dataset_params.n_classes' $(CONFIG_FILE_PARAMS))
@@ -15,6 +17,7 @@ RGB := $(shell jq -r '.dataset_params.rgb' $(CONFIG_FILE_PARAMS))
 N_CHANNELS := $(shell jq -r '.dataset_params.n_channels' $(CONFIG_FILE_PARAMS))
 DATASET_NAME := $(shell jq -r '.dataset_params.dataset_name' $(CONFIG_FILE_PARAMS))
 MASK_TYPE := $(shell jq -r '.dataset_params.mask_name' $(CONFIG_FILE_PARAMS))
+MASK_PARAMS := $(shell jq -r '.dataset_params.masks_configs' $(CONFIG_FILE_PARAMS))
 REPEAT_IMAGES := $(shell jq -r '.dataset_params.repeat_images' $(CONFIG_FILE_PARAMS))
 
 BATCH_SIZE := $(shell jq -r '.train_params.batch_size' $(CONFIG_FILE_PARAMS))
@@ -23,20 +26,23 @@ LEARNING_RATE := $(shell jq -r '.train_params.learning_rate' $(CONFIG_FILE_PARAM
 INITIALIZE := $(shell jq -r '.train_params.initialize' $(CONFIG_FILE_PARAMS))
 LR_SCHEDULER := $(shell jq -r '.train_params.scheduler' $(CONFIG_FILE_PARAMS))
 MODEL_NAME := $(shell jq -r '.train_params.model_name' $(CONFIG_FILE_PARAMS))
+MODEL_PARAMS := $(shell jq -r '.model_configs' $(CONFIG_FILE_PARAMS))
 
-MODEL_IDENTIFIER := $(N_TRAIN)_$(N_TEST)_$(N_CLASSES)_$(EPOCHS)_$(BATCH_SIZE)_$(LEARNING_RATE)
+# MODEL_IDENTIFIER := $(N_TRAIN)_$(N_TEST)_$(N_CLASSES)_$(EPOCHS)_$(BATCH_SIZE)_$(LEARNING_RATE)
 
-ifeq ($(LR_SCHEDULER), True)
-	MODEL_IDENTIFIER := $(MODEL_IDENTIFIER)_scheduled
-endif
+MODEL_IDENTIFIER := $(UNIX_TIMESTAMP)
 
-ifeq ($(INITIALIZE), True)
-	MODEL_IDENTIFIER := $(MODEL_IDENTIFIER)_initialized
-endif
+# ifeq ($(LR_SCHEDULER), True)
+# 	MODEL_IDENTIFIER := $(MODEL_IDENTIFIER)_scheduled
+# endif
 
-ifeq ($(RGB), True)
-	MODEL_IDENTIFIER := $(MODEL_IDENTIFIER)_rgb
-endif
+# ifeq ($(INITIALIZE), True)
+# 	MODEL_IDENTIFIER := $(MODEL_IDENTIFIER)_initialized
+# endif
+
+# ifeq ($(RGB), True)
+# 	MODEL_IDENTIFIER := $(MODEL_IDENTIFIER)_rgb
+# endif
 
 DATASET_IDENTIFIER := $(N_CLASSES)_$(MASK_TYPE)
 ifeq ($(REPEAT_IMAGES), True)
@@ -64,6 +70,7 @@ OPTIM_FOLDER := $(DATA_FOLDER)/optimization/$(DATASET_NAME)
 TESTS_FOLDER := $(SRC_FOLDER)/tests
 RESULTS_PLOT_FOLDER := $(FIGURES_FOLDER)/results
 SAMPLES_FOLDER := $(FIGURES_FOLDER)/$(MODEL_IDENTIFIER)
+SUMMARY_FOLDER := $(DATA_FOLDER)/summaries
 
 
 DATASET_CREATION_CODE_PATH := $(PREPROCESSING_FOLDER)/create_dataset.py
@@ -72,10 +79,11 @@ TRAIN_CODE_PATH := $(SRC_FOLDER)/train.py
 TRAIN_PATH := $(DATASET_FOLDER)/train/dataset_$(N_TRAIN)_$(DATASET_IDENTIFIER).pth
 TEST_PATH := $(DATASET_FOLDER)/test/dataset_$(N_TEST)_$(DATASET_IDENTIFIER).pth
 
-RESULTS_PLOT_PATH := $(RESULTS_PLOT_FOLDER)/$(MODEL_NAME)_$(MODEL_IDENTIFIER)_$(DATASET_IDENTIFIER).png
-RESULTS_PATH := $(RESULTS_FOLDER)/$(MODEL_NAME)_$(MODEL_IDENTIFIER)_$(DATASET_IDENTIFIER).json
-WEIGHTS_PATH := $(WEIGHTS_FOLDER)/$(MODEL_NAME)_$(MODEL_IDENTIFIER)_$(DATASET_IDENTIFIER).pth
-OPTIM_PATH := $(OPTIM_FOLDER)/$(MODEL_NAME)_$(MODEL_IDENTIFIER)_$(DATASET_IDENTIFIER).json
+RESULTS_PLOT_PATH := $(RESULTS_PLOT_FOLDER)/$(MODEL_IDENTIFIER).png
+RESULTS_PATH := $(RESULTS_FOLDER)/$(MODEL_IDENTIFIER).json
+WEIGHTS_PATH := $(WEIGHTS_FOLDER)/$(MODEL_IDENTIFIER).pth
+OPTIM_PATH := $(OPTIM_FOLDER)/$(MODEL_IDENTIFIER).json
+SUMMARY_PATH := $(SUMMARY_FOLDER)/$(MODEL_IDENTIFIER).txt
 
 
 .DEFAULT:
@@ -96,7 +104,32 @@ preprocess : config
 	@echo "\nCreating train dataset with $(DATASET_CREATION_CODE_PATH) code..."
 	$(PYTHON) $(DATASET_CREATION_CODE_PATH) --paths $(CONFIG_FILE_PATHS) --params $(CONFIG_FILE_PARAMS)
 
-train: config
+create_summary:
+	@echo "Creating summary..."
+	@echo "Summary of the training process" > $(SUMMARY_PATH)
+	@echo "Sample Identifier: $(MODEL_IDENTIFIER)" >> $(SUMMARY_PATH)
+	@echo "" >> $(SUMMARY_PATH)
+	@echo "Dataset Name: $(DATASET_NAME)" >> $(SUMMARY_PATH)
+	@echo "Number of Training Samples: $(N_TRAIN)" >> $(SUMMARY_PATH)
+	@echo "Number of Testing Samples: $(N_TEST)" >> $(SUMMARY_PATH)
+	@echo "Number of Classes: $(N_CLASSES)" >> $(SUMMARY_PATH)
+	@echo "Repeat Images: $(REPEAT_IMAGES)" >> $(SUMMARY_PATH)
+	@echo "RGB: $(RGB)" >> $(SUMMARY_PATH)
+	@echo "Mask type: $(MASK_TYPE)" >> $(SUMMARY_PATH)
+	@echo "Mask Parameters: $(MASK_PARAMS)" >> $(SUMMARY_PATH)
+	@echo "" >> $(SUMMARY_PATH)
+	@echo "Model Parameters" >> $(SUMMARY_PATH)
+	@echo "Model Name: $(MODEL_NAME)" >> $(SUMMARY_PATH)
+	@echo "Model parameters: $(MODEL_PARAMS)" >> $(SUMMARY_PATH)
+	@echo "" >> $(SUMMARY_PATH)
+	@echo "Training Parameters" >> $(SUMMARY_PATH)
+	@echo "Batch Size: $(BATCH_SIZE)" >> $(SUMMARY_PATH)
+	@echo "Epochs: $(EPOCHS)" >> $(SUMMARY_PATH)
+	@echo "Learning Rate: $(LEARNING_RATE)" >> $(SUMMARY_PATH)
+	@echo "Scheduler: $(LR_SCHEDULER)" >> $(SUMMARY_PATH)
+	@echo "Initialize: $(INITIALIZE)" >> $(SUMMARY_PATH)
+
+train: create_summary config
 	@echo "Training the model..."
 	$(PYTHON) $(TRAIN_CODE_PATH) --paths $(CONFIG_FILE_PATHS) --params $(CONFIG_FILE_PARAMS)
 
