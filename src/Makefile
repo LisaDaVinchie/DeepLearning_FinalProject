@@ -78,13 +78,26 @@ SUMMARY_PATH := $(SUMMARY_FOLDER)/$(MODEL_IDENTIFIER).txt
 .PHONY: config preprocess train test zipw help
 
 config:
-	@echo '{"raw_data_folder": "$(RAW_DATA_FOLDER)", "dataset_path": "$(DATASET_FOLDER)", "weights_path": "$(WEIGHTS_PATH)", "loss_figure_path": "$(LOSS_FIGURE_PATH)", "results_path": "$(RESULTS_PATH)", "results_plot_path": "$(RESULTS_PLOT_PATH)", "samples_folder": "$(SAMPLES_FOLDER)/", "optim_path": "$(OPTIM_PATH)"' > $(CONFIG_FILE_PATHS)
+	@echo "{" > $(CONFIG_FILE_PATHS)
+	@echo '  "raw_data_folder": "$(RAW_DATA_FOLDER)",' >> $(CONFIG_FILE_PATHS)
+	@echo '  "dataset_path": "$(DATASET_FOLDER)",' >> $(CONFIG_FILE_PATHS)
+	@echo '  "weights_path": "$(WEIGHTS_PATH)",' >> $(CONFIG_FILE_PATHS)
+	@echo '  "loss_figure_path": "$(LOSS_FIGURE_PATH)",' >> $(CONFIG_FILE_PATHS)
+	@echo '  "results_path": "$(RESULTS_PATH)",' >> $(CONFIG_FILE_PATHS)
+	@echo '  "results_plot_path": "$(RESULTS_PLOT_PATH)",' >> $(CONFIG_FILE_PATHS)
+	@echo '  "samples_folder": "$(SAMPLES_FOLDER)/",' >> $(CONFIG_FILE_PATHS)
+	@echo '  "optim_path": "$(OPTIM_PATH)",' >> $(CONFIG_FILE_PATHS)
+	@echo '  "train_path": "$(TRAIN_PATH)", ' >> $(CONFIG_FILE_PATHS)
+	@echo '  "test_path": "$(TEST_PATH)",' >> $(CONFIG_FILE_PATHS)
+	@echo '  "summary_path": "$(SUMMARY_PATH)"' >> $(CONFIG_FILE_PATHS)
 ifeq ($(DATASET_NAME), tinyimagenet)
-	@echo ', "train_path": "$(TRAIN_PATH)", "test_path": "$(TEST_PATH)", "image_extension": ".JPEG"' >> $(CONFIG_FILE_PATHS)
+	@echo ',' >> $(CONFIG_FILE_PATHS)
+	@echo '  "image_extension": ".JPEG"' >> $(CONFIG_FILE_PATHS)
 else ifeq ($(DATASET_NAME), groceries)
-	@echo ', "train_path": "$(TRAIN_PATH)", "test_path": "$(TEST_PATH)", "image_extension": ".png"' >> $(CONFIG_FILE_PATHS)
+	@echo ',' >> $(CONFIG_FILE_PATHS)
+	@echo ' "image_extension": ".png"' >> $(CONFIG_FILE_PATHS)
 endif
-	@echo '}' >> $(CONFIG_FILE_PATHS)
+	@echo "}" >> $(CONFIG_FILE_PATHS)
 
 preprocess : config
 	@echo "\nCreating train dataset with $(DATASET_CREATION_CODE_PATH) code..."
